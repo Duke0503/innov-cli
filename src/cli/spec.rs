@@ -38,6 +38,7 @@ pub(super) fn command() -> Command {
         .subcommand(tab_command())
         .subcommand(notification_command())
         .subcommand(agent_command())
+        .subcommand(profile_command())
         .subcommand(pane_command())
         .subcommand(terminal_command())
         .subcommand(session_command())
@@ -446,6 +447,71 @@ fn agent_command() -> Command {
                         .action(ArgAction::SetTrue),
                 ),
         )
+}
+
+fn profile_command() -> Command {
+    Command::new("profile")
+        .about("Manage named AI CLI profiles and shell aliases")
+        .subcommand(
+            Command::new("list")
+                .about("List configured profiles")
+                .arg(json_flag()),
+        )
+        .subcommand(
+            Command::new("add")
+                .about("Create or replace a profile")
+                .arg(required("alias", "ALIAS"))
+                .arg(
+                    option("cli", "CLI")
+                        .required(true)
+                        .value_parser(["codex", "claude", "agy"]),
+                )
+                .arg(option("provider", "NAME"))
+                .arg(option("base-url", "URL"))
+                .arg(option("profile-name", "NAME"))
+                .arg(option("command", "COMMAND"))
+                .arg(option("api-key", "KEY"))
+                .arg(option("api-key-env", "ENV"))
+                .arg(flag("api-key-stdin"))
+                .arg(option("env-var", "ENV"))
+                .arg(option("danger", "LEVEL").value_parser([
+                    "ask",
+                    "accept_edits",
+                    "workspace_write",
+                    "bypass",
+                ]))
+                .arg(option("model", "MODEL"))
+                .arg(option("opus-model", "MODEL"))
+                .arg(option("sonnet-model", "MODEL"))
+                .arg(option("haiku-model", "MODEL"))
+                .arg(option("wire-api", "WIRE_API"))
+                .arg(repeatable_option("arg", "ARG"))
+                .arg(flag("replace")),
+        )
+        .subcommand(
+            Command::new("remove")
+                .about("Remove a profile from the registry")
+                .arg(required("alias", "ALIAS")),
+        )
+        .subcommand(
+            Command::new("install")
+                .about("Write CLI configs and install shell functions")
+                .arg(option("shell", "SHELL").value_parser(["posix", "powershell"]))
+                .arg(path_option("rc", "PATH"))
+                .arg(flag("no-rc")),
+        )
+        .subcommand(
+            Command::new("exec")
+                .about("Run a profile directly with its scoped environment")
+                .arg(required("alias", "ALIAS"))
+                .arg(
+                    Arg::new("profile_args")
+                        .value_name("ARG")
+                        .num_args(0..)
+                        .last(true),
+                ),
+        )
+        .subcommand(Command::new("path").about("Print the profile registry path"))
 }
 
 pub(super) fn agent_kind_values() -> Vec<&'static str> {

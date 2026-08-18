@@ -361,6 +361,7 @@ fn agent_start(args: &[String]) -> std::io::Result<i32> {
                 name: name.clone(),
                 kind: kind.clone(),
                 pane_id: pane_id.clone(),
+                command: None,
                 args: agent_args.clone(),
                 timeout_ms,
             }),

@@ -165,6 +165,9 @@ pub struct AgentStartParams {
     pub name: String,
     pub kind: String,
     pub pane_id: String,
+    /// Optional executable or shell alias; defaults to the canonical command for `kind`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub command: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub args: Vec<String>,
     /// Startup timeout in milliseconds. Values must be greater than 3000 and at most 300000.

@@ -4,7 +4,6 @@
 //! logical handoff layer on top of that runtime without invoking another
 //! `herdr` executable.
 
-use std::collections::HashMap;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -55,7 +54,10 @@ pub(super) fn run_switch_command(args: &[String]) -> io::Result<i32> {
 
 fn parse_switch_options(args: &[String]) -> Result<Option<SwitchOptions>, String> {
     let Some(source) = args.first().filter(|value| !value.starts_with('-')) else {
-        return Err("usage: cli switch <agent-target> --to <codex|claude|agy> [OPTIONS]".into());
+        return Err(
+            "usage: cli switch <agent-target> --to <codex|claude|agy|profile-alias> [OPTIONS]"
+                .into(),
+        );
     };
 
     let mut backend = None;
@@ -107,10 +109,11 @@ fn parse_switch_options(args: &[String]) -> Result<Option<SwitchOptions>, String
     let Some(backend) = backend else {
         return Err("missing required --to BACKEND".into());
     };
-    if !matches!(backend.as_str(), "codex" | "claude" | "agy") {
-        return Err(format!(
-            "unsupported backend {backend:?}; expected codex, claude, or agy"
-        ));
+    if backend
+        .chars()
+        .any(|value| value.is_control() || value.is_whitespace())
+    {
+        return Err("--to must be a backend name or shell-safe profile alias".into());
     }
 
     Ok(Some(SwitchOptions {
@@ -141,6 +144,10 @@ fn switch_agent(
         .or_else(|| source_agent.get("cwd").and_then(Value::as_str))
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("."));
+    let home = std::env::var_os("HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| cwd.clone());
+    let target = super::profile::resolve_switch_target(backend, &home)?;
     let source_kind = source_agent
         .get("agent")
         .and_then(Value::as_str)
@@ -153,7 +160,7 @@ fn switch_agent(
         Some(write_handoff(
             &cwd,
             source_kind,
-            backend,
+            &target.label,
             &source_pane,
             &recent_output,
             context_tokens,
@@ -168,16 +175,17 @@ fn switch_agent(
         cwd: Some(cwd.to_string_lossy().into_owned()),
         focus: true,
         right_click: Default::default(),
-        env: HashMap::new(),
+        env: target.env,
     }))?;
     let new_pane = string_field(result_field(&split_response, "pane")?, "pane_id")?;
-    let agent_name = new_agent_name(backend);
+    let agent_name = new_agent_name(&target.label);
 
     request(Method::AgentStart(AgentStartParams {
         name: agent_name.clone(),
-        kind: backend.to_owned(),
+        kind: target.kind,
         pane_id: new_pane.clone(),
-        args: Vec::new(),
+        command: Some(target.executable),
+        args: target.args,
         timeout_ms: Some(timeout_ms),
     }))?;
 
@@ -205,7 +213,7 @@ fn switch_agent(
         serde_json::json!({
             "switched": true,
             "from": source,
-            "to": backend,
+            "to": target.label,
             "agent": agent_name,
             "pane_id": new_pane,
             "handoff": handoff_path,
@@ -366,7 +374,7 @@ fn timestamp_millis() -> u128 {
 
 fn print_switch_help() {
     eprintln!("cli switch commands:");
-    eprintln!("  cli switch <agent-target> --to <codex|claude|agy> [OPTIONS]");
+    eprintln!("  cli switch <agent-target> --to <codex|claude|agy|profile-alias> [OPTIONS]");
     eprintln!("    --context-tokens N   bound the handoff packet (default: 3500)");
     eprintln!("    --no-handoff         start the backend without sending context");
     eprintln!("    --timeout MS         backend startup/prompt timeout (default: 120000)");
@@ -421,7 +429,17 @@ mod tests {
 
     #[test]
     fn rejects_unsupported_backend_and_invalid_budget() {
-        assert!(parse_switch_options(&args(&["agent-1", "--to", "luna"])).is_err());
+        assert_eq!(
+            parse_switch_options(&args(&["agent-1", "--to", "luna-max"])),
+            Ok(Some(SwitchOptions {
+                source: "agent-1".into(),
+                backend: "luna-max".into(),
+                no_handoff: false,
+                timeout_ms: DEFAULT_TIMEOUT_MS,
+                context_tokens: DEFAULT_CONTEXT_TOKENS,
+            }))
+        );
+        assert!(parse_switch_options(&args(&["agent-1", "--to", "two words"])).is_err());
         assert!(parse_switch_options(&args(&[
             "agent-1",
             "--to",

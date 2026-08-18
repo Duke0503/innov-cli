@@ -39,6 +39,50 @@ cli switch <agent-target> --to claude --context-tokens 2500
 cli switch <agent-target> --to agy --no-handoff
 ```
 
+## Profiles and aliases
+
+Profiles port the AgentPort idea into `cli`: one named alias owns its provider,
+model, key source, and permission level. The registry is stored at
+`~/.config/cli/profiles.toml` (or the platform/config-dir equivalent), while
+CLI-specific overlays are written beside the native Claude/Codex config.
+
+Use an environment reference for keys when possible:
+
+```bash
+cli profile add cx-luna --cli codex \
+  --provider luna --base-url https://gateway.example/v1 \
+  --api-key-env LUNA_CODEX_KEY --model luna-max --danger bypass
+
+cli profile add cc-luna --cli claude \
+  --provider luna --base-url https://gateway.example \
+  --api-key-env LUNA_CLAUDE_KEY --model luna-max --danger accept_edits
+
+cli profile install
+cli profile list
+```
+
+After opening a new shell, the generated functions can be called directly:
+
+```bash
+cx-luna --help
+cc-luna --resume
+cli switch reviewer --to cx-luna
+```
+
+Use `--api-key-stdin` instead of `--api-key` when creating a profile without
+putting the secret in the process argument list. Inline keys are supported for
+compatibility and are stored in the private profile registry. `--command` can
+name an existing shell command or alias for the generated function. When that
+profile is used with `cli switch`, the command is sent to the new pane too, so
+the alias must be available in that pane's shell; without `--command`, `cli`
+uses the native backend executable.
+
+The permission scale is translated per backend: `ask`, `accept_edits`,
+`workspace_write`, and `bypass`. Claude maps `workspace_write` to
+`acceptEdits`; Codex maps it to `approval_policy=never` plus
+`sandbox_mode=workspace-write`. `bypass` enables full Codex access and Claude
+`bypassPermissions`, so it should be used only for trusted workspaces.
+
 The original pane remains available. `cli switch` creates a new pane, starts
 the selected native CLI directly through the internal API, sends the handoff
 packet, and focuses the new pane. It does not invoke an installed `herdr`

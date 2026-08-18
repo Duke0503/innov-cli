@@ -1340,6 +1340,13 @@
               },
               "type": "array"
             },
+            "command": {
+              "description": "Optional executable or shell alias; defaults to the canonical command for `kind`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "kind": {
               "type": "string"
             },
