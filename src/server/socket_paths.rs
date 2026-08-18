@@ -1,7 +1,7 @@
 use std::io;
 use std::path::{Path, PathBuf};
 
-/// Legacy environment variable for overriding the client socket path.
+/// Environment variable for overriding the client socket path.
 ///
 /// Contractual override behavior for auto-detect uses `HERDR_SOCKET_PATH`.
 /// This variable is kept as a fallback for callers that explicitly need a

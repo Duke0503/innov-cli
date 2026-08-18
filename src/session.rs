@@ -102,8 +102,8 @@ pub fn active_name() -> Option<String> {
 
 pub fn local_attach_command() -> String {
     match active_name() {
-        Some(name) => format!("herdr session attach {name}"),
-        None => "herdr".to_string(),
+        Some(name) => format!("cli session attach {name}"),
+        None => "cli".to_string(),
     }
 }
 
@@ -113,15 +113,15 @@ pub fn local_stop_command() -> String {
 
 pub fn stop_command_for(name: Option<&str>) -> String {
     match name {
-        Some(name) => format!("herdr session stop {name}"),
-        None => "herdr server stop".to_string(),
+        Some(name) => format!("cli session stop {name}"),
+        None => "cli server stop".to_string(),
     }
 }
 
 pub fn restart_after_update_guidance(stop_command: &str, attach_command: Option<&str>) -> String {
     let restart = match attach_command {
         Some(command) => format!("Run `{stop_command}`, then run `{command}` again."),
-        None => format!("Run `{stop_command}`, then restart Herdr with the same socket override."),
+        None => format!("Run `{stop_command}`, then restart CLI with the same socket override."),
     };
     format!(
         "Stop the old server to use the new version.\nStopping exits pane processes.\n{restart}"
@@ -133,7 +133,7 @@ pub fn active_restart_after_update_guidance() -> String {
         if let Ok(socket_path) = std::env::var(crate::api::SOCKET_PATH_ENV_VAR) {
             return restart_after_update_guidance(
                 &format!(
-                    "{}={} herdr server stop",
+                    "{}={} cli server stop",
                     crate::api::SOCKET_PATH_ENV_VAR,
                     socket_path
                 ),
@@ -836,7 +836,7 @@ mod tests {
         let _guard = env_lock().lock().unwrap();
         std::env::remove_var(SESSION_ENV_VAR);
 
-        assert_eq!(local_attach_command(), "herdr");
+        assert_eq!(local_attach_command(), "cli");
     }
 
     #[test]
@@ -844,7 +844,7 @@ mod tests {
         let _guard = env_lock().lock().unwrap();
         std::env::set_var(SESSION_ENV_VAR, "work");
 
-        assert_eq!(local_attach_command(), "herdr session attach work");
+        assert_eq!(local_attach_command(), "cli session attach work");
 
         std::env::remove_var(SESSION_ENV_VAR);
     }
@@ -854,7 +854,7 @@ mod tests {
         let _guard = env_lock().lock().unwrap();
         std::env::remove_var(SESSION_ENV_VAR);
 
-        assert_eq!(local_stop_command(), "herdr server stop");
+        assert_eq!(local_stop_command(), "cli server stop");
 
         std::env::remove_var(SESSION_ENV_VAR);
     }
@@ -864,7 +864,7 @@ mod tests {
         let _guard = env_lock().lock().unwrap();
         std::env::set_var(SESSION_ENV_VAR, "work");
 
-        assert_eq!(local_stop_command(), "herdr session stop work");
+        assert_eq!(local_stop_command(), "cli session stop work");
 
         std::env::remove_var(SESSION_ENV_VAR);
     }
@@ -873,23 +873,23 @@ mod tests {
     fn restart_after_update_guidance_names_stop_and_attach_commands() {
         assert_eq!(
             restart_after_update_guidance(
-                "herdr session stop work",
-                Some("herdr session attach work")
+                "cli session stop work",
+                Some("cli session attach work")
             ),
-            "Stop the old server to use the new version.\nStopping exits pane processes.\nRun `herdr session stop work`, then run `herdr session attach work` again."
+            "Stop the old server to use the new version.\nStopping exits pane processes.\nRun `cli session stop work`, then run `cli session attach work` again."
         );
     }
 
     #[test]
     fn active_restart_after_update_guidance_respects_socket_override() {
         let _guard = env_lock().lock().unwrap();
-        std::env::set_var(crate::api::SOCKET_PATH_ENV_VAR, "/tmp/custom-herdr.sock");
+        std::env::set_var(crate::api::SOCKET_PATH_ENV_VAR, "/tmp/custom-cli.sock");
         std::env::remove_var(SESSION_ENV_VAR);
         clear_explicit_session_for_test();
 
         assert_eq!(
             active_restart_after_update_guidance(),
-            "Stop the old server to use the new version.\nStopping exits pane processes.\nRun `HERDR_SOCKET_PATH=/tmp/custom-herdr.sock herdr server stop`, then restart Herdr with the same socket override."
+            "Stop the old server to use the new version.\nStopping exits pane processes.\nRun `HERDR_SOCKET_PATH=/tmp/custom-cli.sock cli server stop`, then restart CLI with the same socket override."
         );
 
         std::env::remove_var(crate::api::SOCKET_PATH_ENV_VAR);
@@ -943,7 +943,7 @@ mod tests {
         let _guard = env_lock().lock().unwrap();
         std::env::set_var(SESSION_ENV_VAR, "bad/name");
         clear_explicit_session_for_test();
-        std::env::set_var(crate::api::SOCKET_PATH_ENV_VAR, "/tmp/herdr.sock");
+        std::env::set_var(crate::api::SOCKET_PATH_ENV_VAR, "/tmp/cli.sock");
         let args = vec![
             "herdr".to_string(),
             "workspace".to_string(),
@@ -954,7 +954,7 @@ mod tests {
 
         assert_eq!(cleaned, vec!["herdr", "workspace", "list"]);
         assert!(!explicit_session_requested());
-        assert_eq!(active_api_socket_path(), PathBuf::from("/tmp/herdr.sock"));
+        assert_eq!(active_api_socket_path(), PathBuf::from("/tmp/cli.sock"));
         assert_eq!(std::env::var(SESSION_ENV_VAR).as_deref(), Ok("bad/name"));
 
         std::env::remove_var(SESSION_ENV_VAR);

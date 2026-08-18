@@ -782,11 +782,11 @@ fn windows_installed_herdr_exe_path() -> Result<PathBuf, String> {
 // ---------------------------------------------------------------------------
 
 fn running_inside_herdr_env(herdr_env: Option<&str>) -> bool {
-    herdr_env == Some(crate::HERDR_ENV_VALUE)
+    herdr_env == Some(crate::CLI_ENV_VALUE)
 }
 
 fn running_inside_herdr() -> bool {
-    running_inside_herdr_env(env::var(crate::HERDR_ENV_VAR).ok().as_deref())
+    running_inside_herdr_env(env::var(crate::CLI_ENV_VAR).ok().as_deref())
 }
 
 #[cfg(not(windows))]
@@ -2742,7 +2742,7 @@ mod tests {
 
     #[test]
     fn running_inside_herdr_env_requires_marker() {
-        assert!(running_inside_herdr_env(Some(crate::HERDR_ENV_VALUE)));
+        assert!(running_inside_herdr_env(Some(crate::CLI_ENV_VALUE)));
         assert!(!running_inside_herdr_env(None));
         assert!(!running_inside_herdr_env(Some("0")));
     }
@@ -2977,7 +2977,7 @@ mod tests {
             "unexpected error: {err}"
         );
         assert!(
-            err.contains("herdr session stop work"),
+            err.contains("cli session stop work"),
             "unexpected error: {err}"
         );
     }

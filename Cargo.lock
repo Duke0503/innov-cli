@@ -201,6 +201,40 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 
 [[package]]
+name = "cli"
+version = "0.8.0"
+dependencies = [
+ "base64",
+ "bincode",
+ "bytes",
+ "clap",
+ "clap_complete",
+ "crossterm",
+ "ctrlc",
+ "interprocess",
+ "jsonc-parser",
+ "libc",
+ "png",
+ "portable-pty",
+ "ratatui",
+ "regex",
+ "schemars",
+ "serde",
+ "serde_ignored",
+ "serde_json",
+ "sha2",
+ "time",
+ "tokio",
+ "toml",
+ "tracing",
+ "tracing-subscriber",
+ "unicode-width",
+ "widestring",
+ "windows-sys",
+ "wmi",
+]
+
+[[package]]
 name = "compact_str"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -668,40 +702,6 @@ name = "heck"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
-
-[[package]]
-name = "herdr"
-version = "0.8.0"
-dependencies = [
- "base64",
- "bincode",
- "bytes",
- "clap",
- "clap_complete",
- "crossterm",
- "ctrlc",
- "interprocess",
- "jsonc-parser",
- "libc",
- "png",
- "portable-pty",
- "ratatui",
- "regex",
- "schemars",
- "serde",
- "serde_ignored",
- "serde_json",
- "sha2",
- "time",
- "tokio",
- "toml",
- "tracing",
- "tracing-subscriber",
- "unicode-width",
- "widestring",
- "windows-sys",
- "wmi",
-]
 
 [[package]]
 name = "hex"

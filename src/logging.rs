@@ -19,8 +19,7 @@ pub(crate) fn init_file_logging(file_name: &str) {
         return;
     };
 
-    let filter =
-        EnvFilter::try_from_env("HERDR_LOG").unwrap_or_else(|_| EnvFilter::new("herdr=info"));
+    let filter = EnvFilter::try_from_env("CLI_LOG").unwrap_or_else(|_| EnvFilter::new("cli=info"));
 
     let _ = tracing_subscriber::fmt()
         .with_env_filter(filter)
@@ -33,8 +32,8 @@ pub(crate) fn init_file_logging(file_name: &str) {
 pub(crate) fn help_log_paths_summary() -> String {
     let dir = crate::session::data_dir();
     format!(
-        "{} (plus herdr-client.log, herdr-server.log)",
-        dir.join("herdr.log").display()
+        "{} (plus cli-client.log, cli-server.log)",
+        dir.join("cli.log").display()
     )
 }
 
@@ -44,7 +43,7 @@ pub(crate) fn startup(role: &'static str) {
         subsystem = role,
         outcome = "started",
         pid = std::process::id(),
-        "herdr starting"
+        "cli starting"
     );
 }
 
@@ -54,7 +53,7 @@ pub(crate) fn shutdown(role: &'static str) {
         subsystem = role,
         outcome = "completed",
         pid = std::process::id(),
-        "herdr exiting"
+        "cli exiting"
     );
 }
 

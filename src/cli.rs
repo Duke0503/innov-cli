@@ -21,6 +21,7 @@ mod server;
 mod server_not_running;
 mod spec;
 mod status;
+mod switcher;
 mod tab;
 mod workspace;
 mod worktree;
@@ -96,6 +97,7 @@ pub fn maybe_run(args: &[String]) -> std::io::Result<CommandOutcome> {
         }
         "api" => api::run_api_command(&args[2..])?,
         "status" => status::run_status_command(&args[2..])?,
+        "switch" => switcher::run_switch_command(&args[2..])?,
         "completion" | "completions" => completion::run_completion_command(&args[2..])?,
         "config" => run_config_command(&args[2..])?,
         "channel" => run_channel_command(&args[2..])?,

@@ -605,11 +605,11 @@ prunable stale
     #[test]
     fn expand_tilde_path_uses_home_when_available() {
         assert_eq!(
-            expand_tilde_path_from_env("~/.herdr/worktrees", false, |key| match key {
+            expand_tilde_path_from_env("~/.cli/worktrees", false, |key| match key {
                 "HOME" => Some("/home/me".into()),
                 _ => None,
             }),
-            PathBuf::from("/home/me/.herdr/worktrees")
+            PathBuf::from("/home/me/.cli/worktrees")
         );
         assert_eq!(
             expand_tilde_path_from_env("/tmp/worktrees", false, |_| None),
@@ -684,7 +684,7 @@ prunable stale
             }
         }
 
-        let default_path = expand_tilde_path_from_env("~/.herdr/worktrees", true, env);
+        let default_path = expand_tilde_path_from_env("~/.cli/worktrees", true, env);
         assert_eq!(
             default_path,
             PathBuf::from(r"C:\Users\herdr\.herdr\worktrees")
@@ -703,11 +703,11 @@ prunable stale
     fn default_checkout_path_appends_repo_and_branch_slug() {
         assert_eq!(
             default_checkout_path(
-                Path::new("/home/me/.herdr/worktrees"),
+                Path::new("/home/me/.cli/worktrees"),
                 "herdr",
                 "worktree/brave-river",
             ),
-            PathBuf::from("/home/me/.herdr/worktrees/herdr/worktree-brave-river")
+            PathBuf::from("/home/me/.cli/worktrees/herdr/worktree-brave-river")
         );
     }
 

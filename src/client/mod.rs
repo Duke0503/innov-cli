@@ -3299,7 +3299,7 @@ mod tests {
         };
         let msg = err.to_string();
         assert!(
-            msg.contains("Run `herdr` to reattach"),
+            msg.contains("Run `cli` to reattach"),
             "should suggest default reattach command: {msg}"
         );
     }
@@ -3314,7 +3314,7 @@ mod tests {
         };
         let msg = err.to_string();
         assert!(
-            msg.contains("Run `herdr session attach work` to reattach"),
+            msg.contains("Run `cli session attach work` to reattach"),
             "should suggest named session reattach command: {msg}"
         );
     }
@@ -3324,7 +3324,7 @@ mod tests {
         let _guard = env_lock().lock().unwrap();
         let _remote_env = EnvVarGuard::set(
             crate::remote::REATTACH_COMMAND_ENV_VAR,
-            "herdr --remote host --session work",
+            "cli --remote host --session work",
         );
         let _session_env = EnvVarGuard::set(crate::session::SESSION_ENV_VAR, "work");
         let err = ClientError::ServerShutdown {
@@ -3332,7 +3332,7 @@ mod tests {
         };
         let msg = err.to_string();
         assert!(
-            msg.contains("Run `herdr --remote host --session work` to reattach"),
+            msg.contains("Run `cli --remote host --session work` to reattach"),
             "should prefer remote reattach command: {msg}"
         );
     }
@@ -3355,7 +3355,7 @@ mod tests {
         let _guard = env_lock().lock().unwrap();
         let _remote_env = EnvVarGuard::set(
             crate::remote::REATTACH_COMMAND_ENV_VAR,
-            "herdr --remote host --session work",
+            "cli --remote host --session work",
         );
         let err =
             ClientError::ConnectionLost(io::Error::new(io::ErrorKind::BrokenPipe, "broken pipe"));
@@ -3369,7 +3369,7 @@ mod tests {
             "should explain possible persistence: {msg}"
         );
         assert!(
-            msg.contains("Run `herdr --remote host --session work` to reattach"),
+            msg.contains("Run `cli --remote host --session work` to reattach"),
             "should show remote reattach command: {msg}"
         );
     }

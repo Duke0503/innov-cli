@@ -16,7 +16,7 @@ use std::time::Duration;
 
 use tracing::info;
 
-use super::socket_paths::client_socket_path;
+use super::socket_paths::{client_socket_path, CLIENT_SOCKET_PATH_ENV_VAR};
 
 /// Maximum time to wait for the server's client socket to become ready
 /// after spawning the server process.
@@ -160,7 +160,7 @@ fn validate_running_server_compatibility() -> io::Result<()> {
     }
 
     Err(io::Error::other(format!(
-        "Herdr was updated, but this session is still running the old server.\n\nserver: v{} protocol {}\nclient: v{} protocol {}\n\n{}",
+        "CLI was updated, but this session is still running the old server.\n\nserver: v{} protocol {}\nclient: v{} protocol {}\n\n{}",
         status.version.as_deref().unwrap_or("unknown"),
         status
             .protocol
@@ -229,7 +229,7 @@ fn build_server_daemon_command(exe: PathBuf) -> Command {
     if crate::session::explicit_session_requested() {
         command
             .env_remove(crate::api::SOCKET_PATH_ENV_VAR)
-            .env_remove("HERDR_CLIENT_SOCKET_PATH");
+            .env_remove(CLIENT_SOCKET_PATH_ENV_VAR);
     }
 
     command
@@ -341,7 +341,7 @@ mod tests {
     fn server_daemon_command_clears_socket_overrides_for_explicit_session() {
         let _guard = env_lock().lock().unwrap();
         std::env::set_var(crate::api::SOCKET_PATH_ENV_VAR, "/tmp/inherited.sock");
-        std::env::set_var("HERDR_CLIENT_SOCKET_PATH", "/tmp/inherited-client.sock");
+        std::env::set_var(CLIENT_SOCKET_PATH_ENV_VAR, "/tmp/inherited-client.sock");
         std::env::remove_var(crate::session::SESSION_ENV_VAR);
         crate::session::clear_explicit_session_for_test();
         let args = vec![
@@ -358,10 +358,10 @@ mod tests {
             *key == OsStr::new(crate::api::SOCKET_PATH_ENV_VAR) && value.is_none()
         }));
         assert!(envs.iter().any(|(key, value)| {
-            *key == OsStr::new("HERDR_CLIENT_SOCKET_PATH") && value.is_none()
+            *key == OsStr::new(CLIENT_SOCKET_PATH_ENV_VAR) && value.is_none()
         }));
         std::env::remove_var(crate::api::SOCKET_PATH_ENV_VAR);
-        std::env::remove_var("HERDR_CLIENT_SOCKET_PATH");
+        std::env::remove_var(CLIENT_SOCKET_PATH_ENV_VAR);
         std::env::remove_var(crate::session::SESSION_ENV_VAR);
         crate::session::clear_explicit_session_for_test();
     }
@@ -569,11 +569,11 @@ test "$sid" = "$$"
             "unexpected error: {message}"
         );
         assert!(
-            message.contains("Run `herdr session stop work`"),
+            message.contains("Run `cli session stop work`"),
             "unexpected error: {message}"
         );
         assert!(
-            message.contains("then run `herdr session attach work` again"),
+            message.contains("then run `cli session attach work` again"),
             "unexpected error: {message}"
         );
         std::env::remove_var("XDG_CONFIG_HOME");

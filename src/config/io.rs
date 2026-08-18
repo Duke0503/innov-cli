@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use tracing::warn;
 
-use super::{model::LoadedConfig, Config, CONFIG_PATH_ENV_VAR};
+use super::{model::LoadedConfig, Config, CONFIG_PATH_ENV_VAR, LEGACY_CONFIG_PATH_ENV_VAR};
 
 const KNOWN_TOP_LEVEL_CONFIG_KEYS: &[&str] = &[
     "advanced",
@@ -21,9 +21,9 @@ const KNOWN_TOP_LEVEL_CONFIG_KEYS: &[&str] = &[
 
 pub fn app_dir_name() -> &'static str {
     if cfg!(debug_assertions) {
-        "herdr-dev"
+        "cli-dev"
     } else {
-        "herdr"
+        "cli"
     }
 }
 
@@ -168,6 +168,9 @@ pub(super) fn resolve_config_relative_path(path: &Path) -> PathBuf {
 
 pub fn config_path() -> PathBuf {
     if let Ok(path) = std::env::var(CONFIG_PATH_ENV_VAR) {
+        return PathBuf::from(path);
+    }
+    if let Ok(path) = std::env::var(LEGACY_CONFIG_PATH_ENV_VAR) {
         return PathBuf::from(path);
     }
     config_dir().join("config.toml")

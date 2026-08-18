@@ -1,12 +1,12 @@
 [package]
-name = "herdr"
+name = "cli"
 version = "0.8.0"
 edition = "2021"
 build = "build.rs"
-description = "terminal workspace manager for AI coding agents"
+description = "terminal workspace manager and AI CLI switcher"
 license = "Apache-2.0"
-repository = "https://github.com/herdrdev/herdr"
-homepage = "https://herdr.dev"
+repository = "https://github.com/Duke0503/cli"
+homepage = "https://github.com/Duke0503/cli"
 keywords = ["terminal", "tui", "ai", "agents", "multiplexer"]
 categories = ["command-line-utilities"]
 include = [

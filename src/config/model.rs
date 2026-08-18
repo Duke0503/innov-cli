@@ -1089,7 +1089,7 @@ impl Default for KeysConfig {
 impl Default for WorktreesConfig {
     fn default() -> Self {
         Self {
-            directory: "~/.herdr/worktrees".into(),
+            directory: "~/.cli/worktrees".into(),
         }
     }
 }
@@ -1427,7 +1427,7 @@ tab_bar_right_separator = " · "
     #[test]
     fn worktrees_directory_defaults_and_parses() {
         let default_config = Config::default();
-        assert_eq!(default_config.worktrees.directory, "~/.herdr/worktrees");
+        assert_eq!(default_config.worktrees.directory, "~/.cli/worktrees");
 
         let toml = r#"
 [worktrees]
