@@ -39,6 +39,18 @@ cli switch <agent-target> --to claude --context-tokens 2500
 cli switch <agent-target> --to agy --no-handoff
 ```
 
+When an agent pane is focused, the same switch can be started from inside the
+running session:
+
+```text
+/switch agy
+/switch co-ht
+```
+
+The focused agent is used as the source automatically. The command creates and
+focuses the target pane in the current session; the original pane remains
+available. Other slash input is forwarded to the agent unchanged.
+
 ## Profiles and aliases
 
 Profiles port the AgentPort idea into `cli`: one named alias owns its provider,

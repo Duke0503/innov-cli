@@ -69,6 +69,13 @@ pub enum CommandOutcome {
     NotCli,
 }
 
+pub(crate) fn validate_switch_backend(backend: &str) -> std::io::Result<()> {
+    let home = std::env::var_os("HOME")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::path::PathBuf::from("."));
+    profile::resolve_switch_target(backend, &home).map(|_| ())
+}
+
 pub(super) fn print_read_response(response: &serde_json::Value) -> std::io::Result<i32> {
     if response.get("error").is_some() {
         eprintln!("{response}");

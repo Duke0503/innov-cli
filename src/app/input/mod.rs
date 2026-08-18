@@ -46,6 +46,7 @@ mod overlays;
 mod selection;
 mod settings;
 mod sidebar;
+mod slash;
 mod terminal;
 
 pub(crate) use self::{
@@ -66,15 +67,59 @@ use self::{
     },
     mouse::MouseAction,
     settings::SettingsAction,
+    slash::SlashCommandAction,
 };
 use super::state::{AppState, Mode};
 use super::App;
+pub(crate) use slash::SlashCommandBuffer;
 
 // ---------------------------------------------------------------------------
 // Key handling
 // ---------------------------------------------------------------------------
 
 impl App {
+    fn slash_command_action(
+        &mut self,
+        source_id: super::InputSourceId,
+        key: &TerminalKey,
+    ) -> SlashCommandAction {
+        let action = self
+            .slash_command_buffers
+            .entry(source_id)
+            .or_default()
+            .handle_key(key);
+        self.remove_inactive_slash_command_buffer(source_id);
+        action
+    }
+
+    fn slash_text_action(
+        &mut self,
+        source_id: super::InputSourceId,
+        text: &str,
+    ) -> SlashCommandAction {
+        let action = self
+            .slash_command_buffers
+            .entry(source_id)
+            .or_default()
+            .handle_text(text);
+        self.remove_inactive_slash_command_buffer(source_id);
+        action
+    }
+
+    fn remove_inactive_slash_command_buffer(&mut self, source_id: super::InputSourceId) {
+        if self
+            .slash_command_buffers
+            .get(&source_id)
+            .is_some_and(|buffer| !buffer.is_active())
+        {
+            self.slash_command_buffers.remove(&source_id);
+        }
+    }
+
+    pub(crate) fn clear_slash_command_buffer(&mut self, source_id: super::InputSourceId) {
+        self.slash_command_buffers.remove(&source_id);
+    }
+
     pub(super) async fn handle_key(
         &mut self,
         key: TerminalKey,
@@ -123,7 +168,11 @@ impl App {
         None
     }
 
-    pub(crate) fn handle_text_commit_headless(&mut self, text: &str) {
+    pub(crate) fn handle_text_commit_headless_from(
+        &mut self,
+        source_id: super::InputSourceId,
+        text: &str,
+    ) {
         if text.is_empty() {
             return;
         }
@@ -140,6 +189,36 @@ impl App {
             return;
         }
 
+        match self.slash_text_action(source_id, text) {
+            SlashCommandAction::PassThrough => {}
+            SlashCommandAction::Consumed => return,
+            SlashCommandAction::Execute(backend) => {
+                self.launch_switch_from_slash(&backend);
+                return;
+            }
+            SlashCommandAction::Forward(text) => {
+                if let Some(ws_idx) = self.state.active {
+                    if let Some(runtime) = self
+                        .state
+                        .focused_runtime_in_workspace(&self.terminal_runtimes, ws_idx)
+                    {
+                        let _ = runtime.try_send_bytes(Bytes::from(text));
+                    }
+                }
+                return;
+            }
+            SlashCommandAction::ForwardAndContinue(text) => {
+                if let Some(ws_idx) = self.state.active {
+                    if let Some(runtime) = self
+                        .state
+                        .focused_runtime_in_workspace(&self.terminal_runtimes, ws_idx)
+                    {
+                        let _ = runtime.try_send_bytes(Bytes::from(text));
+                    }
+                }
+            }
+        }
+
         self.state.clear_selection();
         self.selection_autoscroll_deadline = None;
         self.state.update_dismissed = true;
@@ -149,6 +228,40 @@ impl App {
                 .focused_runtime_in_workspace(&self.terminal_runtimes, ws_idx)
             {
                 let _ = runtime.try_send_bytes(Bytes::copy_from_slice(text.as_bytes()));
+            }
+        }
+    }
+
+    pub(crate) fn handle_paste_headless_from(
+        &mut self,
+        source_id: super::InputSourceId,
+        text: String,
+    ) {
+        if self.try_route_paste_to_popup(&text) {
+            return;
+        }
+        if self.state.mode != Mode::Terminal {
+            self.paste_into_active_text_input(&text);
+            return;
+        }
+
+        let text = match self.slash_text_action(source_id, &text) {
+            SlashCommandAction::PassThrough => text,
+            SlashCommandAction::Consumed => return,
+            SlashCommandAction::Execute(backend) => {
+                self.launch_switch_from_slash(&backend);
+                return;
+            }
+            SlashCommandAction::Forward(text) => text,
+            SlashCommandAction::ForwardAndContinue(text) => text,
+        };
+
+        if let Some(ws_idx) = self.state.active {
+            if let Some(runtime) = self
+                .state
+                .focused_runtime_in_workspace(&self.terminal_runtimes, ws_idx)
+            {
+                let _ = runtime.try_send_paste(text);
             }
         }
     }
@@ -168,6 +281,36 @@ impl App {
         if self.state.mode != Mode::Terminal {
             self.paste_into_active_text_input(&text);
             return;
+        }
+
+        match self.slash_text_action(super::LOCAL_INPUT_SOURCE, &text) {
+            SlashCommandAction::PassThrough => {}
+            SlashCommandAction::Consumed => return,
+            SlashCommandAction::Execute(backend) => {
+                self.launch_switch_from_slash(&backend);
+                return;
+            }
+            SlashCommandAction::Forward(text) => {
+                if let Some(ws_idx) = self.state.active {
+                    if let Some(runtime) = self
+                        .state
+                        .focused_runtime_in_workspace(&self.terminal_runtimes, ws_idx)
+                    {
+                        let _ = runtime.send_bytes(Bytes::from(text)).await;
+                    }
+                }
+                return;
+            }
+            SlashCommandAction::ForwardAndContinue(text) => {
+                if let Some(ws_idx) = self.state.active {
+                    if let Some(runtime) = self
+                        .state
+                        .focused_runtime_in_workspace(&self.terminal_runtimes, ws_idx)
+                    {
+                        let _ = runtime.send_bytes(Bytes::from(text)).await;
+                    }
+                }
+            }
         }
 
         self.state.clear_selection();
@@ -196,6 +339,17 @@ impl App {
             self.paste_into_active_text_input(&text);
             return;
         }
+
+        let text = match self.slash_text_action(super::LOCAL_INPUT_SOURCE, &text) {
+            SlashCommandAction::PassThrough => text,
+            SlashCommandAction::Consumed => return,
+            SlashCommandAction::Execute(backend) => {
+                self.launch_switch_from_slash(&backend);
+                return;
+            }
+            SlashCommandAction::Forward(text) => text,
+            SlashCommandAction::ForwardAndContinue(text) => text,
+        };
 
         if let Some(ws_idx) = self.state.active {
             if let Some(rt) = self

@@ -129,6 +129,7 @@ pub struct App {
     pub(crate) last_sidebar_divider_click: Option<Instant>,
     pub(crate) last_pane_click: Option<PaneClickState>,
     pub(crate) pending_url_click_sources: HashSet<InputSourceId>,
+    pub(crate) slash_command_buffers: HashMap<InputSourceId, crate::app::input::SlashCommandBuffer>,
     pub(crate) next_resize_poll: Instant,
     pub(crate) next_auto_update_check: Option<Instant>,
     pub(crate) next_agent_manifest_update_check: Option<Instant>,
@@ -764,6 +765,7 @@ impl App {
             last_sidebar_divider_click: None,
             last_pane_click: None,
             pending_url_click_sources: HashSet::new(),
+            slash_command_buffers: HashMap::new(),
             next_resize_poll: Instant::now() + RESIZE_POLL_INTERVAL,
             next_auto_update_check: version_check_enabled
                 .then_some(Instant::now() + AUTO_UPDATE_CHECK_INTERVAL),
@@ -1809,7 +1811,7 @@ impl App {
                     }
                 }
                 crate::raw_input::RawInputEvent::Text(text) => {
-                    self.handle_text_commit_headless(text.as_str());
+                    self.handle_text_commit_headless_from(source_id, text.as_str());
                 }
                 crate::raw_input::RawInputEvent::Mouse(mouse) => {
                     if self.state.popup_pane.is_some() || self.state.mouse_capture {
@@ -1820,29 +1822,13 @@ impl App {
                     }
                 }
                 crate::raw_input::RawInputEvent::Paste(text) => {
-                    if self.try_route_paste_to_popup(&text) {
-                    } else if self.state.mode != Mode::Terminal {
-                        self.paste_into_active_text_input(&text);
-                    } else {
-                        if let Some(ws_idx) = self.state.active {
-                            if let Some(ws) = self.state.workspaces.get(ws_idx) {
-                                if let Some(focused) = ws.focused_pane_id() {
-                                    if let Some(runtime) = self.state.runtime_for_pane_in_workspace(
-                                        &self.terminal_runtimes,
-                                        ws_idx,
-                                        focused,
-                                    ) {
-                                        let _ = runtime.try_send_paste(text);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    self.handle_paste_headless_from(source_id, text);
                 }
                 crate::raw_input::RawInputEvent::OuterFocusGained => {
                     self.send_outer_focus_event(crate::ghostty::FocusEvent::Gained);
                 }
                 crate::raw_input::RawInputEvent::OuterFocusLost => {
+                    self.clear_slash_command_buffer(source_id);
                     self.release_input_source_headless(source_id);
                     self.send_outer_focus_event(crate::ghostty::FocusEvent::Lost);
                 }
@@ -1874,6 +1860,7 @@ impl App {
         // raises the browser and costs the host terminal its focus before the
         // mouse release arrives.
         self.pending_url_click_sources.remove(&source_id);
+        self.clear_slash_command_buffer(source_id);
         self.release_input_source_headless(source_id);
     }
 

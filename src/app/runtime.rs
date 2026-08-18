@@ -252,6 +252,7 @@ impl App {
                 true
             }
             crate::raw_input::RawInputEvent::OuterFocusLost => {
+                self.clear_slash_command_buffer(super::LOCAL_INPUT_SOURCE);
                 self.release_input_source(super::LOCAL_INPUT_SOURCE).await;
                 self.send_outer_focus_event(crate::ghostty::FocusEvent::Lost);
                 self.state.outer_terminal_focus = Some(false);

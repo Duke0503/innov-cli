@@ -7,6 +7,8 @@ use crate::{
     input::TerminalKey,
 };
 
+use super::slash::SlashCommandAction;
+
 struct PreparedPaneInput {
     ws_idx: usize,
     pane_id: crate::layout::PaneId,
@@ -73,6 +75,22 @@ impl App {
         self.state.clear_selection();
         self.selection_autoscroll_deadline = None;
         self.state.update_dismissed = true;
+
+        match self.slash_command_action(source_id, &key) {
+            SlashCommandAction::PassThrough => {}
+            SlashCommandAction::Consumed => return None,
+            SlashCommandAction::Execute(backend) => {
+                self.launch_switch_from_slash(&backend);
+                return None;
+            }
+            SlashCommandAction::Forward(text) => {
+                self.forward_slash_text_headless(&text)?;
+                return None;
+            }
+            SlashCommandAction::ForwardAndContinue(text) => {
+                self.forward_slash_text_headless(&text)?;
+            }
+        }
 
         if let Some(action) =
             super::terminal_direct_non_indexed_navigation_action(&self.state, &key)
@@ -233,6 +251,18 @@ impl App {
             target: TerminalInputTarget { terminal_id },
             bytes: Bytes::from(bytes),
         })
+    }
+
+    fn forward_slash_text_headless(&self, text: &str) -> Option<()> {
+        let ws_idx = self.state.active?;
+        let ws = self.state.workspaces.get(ws_idx)?;
+        let pane_id = ws.focused_pane_id()?;
+        let runtime =
+            self.state
+                .runtime_for_pane_in_workspace(&self.terminal_runtimes, ws_idx, pane_id)?;
+        runtime
+            .try_send_bytes(Bytes::copy_from_slice(text.as_bytes()))
+            .ok()
     }
 
     fn prepare_popup_key_forward(&mut self, key: TerminalKey) -> PreparedPopupInput {
