@@ -16,7 +16,7 @@ function Invoke-Checked {
 }
 
 $exe = (Resolve-Path $ExePath).Path
-$fakeDir = Join-Path ([System.IO.Path]::GetTempPath()) "herdr-fake-conpty-$([guid]::NewGuid().ToString('N'))"
+$fakeDir = Join-Path ([System.IO.Path]::GetTempPath()) "innov-fake-conpty-$([guid]::NewGuid().ToString('N'))"
 New-Item -ItemType Directory -Force $fakeDir | Out-Null
 
 $fakeSource = Join-Path $fakeDir "fake_conpty.rs"
@@ -58,12 +58,12 @@ pub extern "system" fn ClosePseudoConsole(_hpc: HANDLE) {}
 Invoke-Checked rustc @("--crate-type", "cdylib", "--edition", "2021", $fakeSource, "-o", $fakeDll)
 
 $oldPath = $env:PATH
-$oldSession = $env:HERDR_SESSION
-$oldSocket = $env:HERDR_SOCKET_PATH
-$oldClientSocket = $env:HERDR_CLIENT_SOCKET_PATH
+$oldSession = $env:INNOV_SESSION
+$oldSocket = $env:INNOV_SOCKET_PATH
+$oldClientSocket = $env:INNOV_CLIENT_SOCKET_PATH
 $env:PATH = "$fakeDir;$oldPath"
-$env:HERDR_SESSION = $Session
-Remove-Item Env:HERDR_SOCKET_PATH, Env:HERDR_CLIENT_SOCKET_PATH -ErrorAction SilentlyContinue
+$env:INNOV_SESSION = $Session
+Remove-Item Env:INNOV_SOCKET_PATH, Env:INNOV_CLIENT_SOCKET_PATH -ErrorAction SilentlyContinue
 
 $server = $null
 try {
@@ -102,7 +102,7 @@ try {
     if ([string]::IsNullOrWhiteSpace($paneId)) {
         throw "workspace create did not return a root pane id: $($created -join "`n")"
     }
-    $marker = "HERDR_CONPTY_SMOKE_OK"
+    $marker = "INNOV_CONPTY_SMOKE_OK"
     Invoke-Checked $exe @("pane", "run", $paneId, "echo $marker")
 
     $text = ""
@@ -144,19 +144,19 @@ try {
     $global:LASTEXITCODE = 0
     $env:PATH = $oldPath
     if ($null -eq $oldSession) {
-        Remove-Item Env:HERDR_SESSION -ErrorAction SilentlyContinue
+        Remove-Item Env:INNOV_SESSION -ErrorAction SilentlyContinue
     } else {
-        $env:HERDR_SESSION = $oldSession
+        $env:INNOV_SESSION = $oldSession
     }
     if ($null -eq $oldSocket) {
-        Remove-Item Env:HERDR_SOCKET_PATH -ErrorAction SilentlyContinue
+        Remove-Item Env:INNOV_SOCKET_PATH -ErrorAction SilentlyContinue
     } else {
-        $env:HERDR_SOCKET_PATH = $oldSocket
+        $env:INNOV_SOCKET_PATH = $oldSocket
     }
     if ($null -eq $oldClientSocket) {
-        Remove-Item Env:HERDR_CLIENT_SOCKET_PATH -ErrorAction SilentlyContinue
+        Remove-Item Env:INNOV_CLIENT_SOCKET_PATH -ErrorAction SilentlyContinue
     } else {
-        $env:HERDR_CLIENT_SOCKET_PATH = $oldClientSocket
+        $env:INNOV_CLIENT_SOCKET_PATH = $oldClientSocket
     }
     Remove-Item -Recurse -Force $fakeDir -ErrorAction SilentlyContinue
 }

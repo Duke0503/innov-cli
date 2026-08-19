@@ -1,4 +1,4 @@
-# herdr task runner
+# innov task runner
 
 # Run tests
 test:
@@ -39,7 +39,7 @@ ci filter='all()': lint
 [unix]
 windows-lint:
     rustup target add x86_64-pc-windows-msvc
-    LIBGHOSTTY_VT_SIMD=false cargo clippy --bin herdr --locked --target x86_64-pc-windows-msvc -- -D warnings
+    LIBGHOSTTY_VT_SIMD=false cargo clippy --bin innov --locked --target x86_64-pc-windows-msvc -- -D warnings
 
 # Check formatting + run unit tests + Windows target lint + maintenance script tests
 [unix]
@@ -71,7 +71,7 @@ build:
 
 # Non-gating full-render scaling profile for background workspaces and active panes
 bench-render-scale:
-    cargo test --release --locked --bin herdr render_scale_profile -- --ignored --nocapture --test-threads=1
+    cargo test --release --locked --bin innov render_scale_profile -- --ignored --nocapture --test-threads=1
 
 # Build the website and documentation
 website-build:
@@ -79,9 +79,9 @@ website-build:
 
 # Test bundled agent integration assets
 integration-assets-test:
-    bun test src/integration/assets/herdr-agent-state.test.ts
-    bun test src/integration/assets/opencode/herdr-agent-state.test.ts
-    bun test src/integration/assets/opencode/herdr-tui-session.test.ts
+    bun test src/integration/assets/innov-agent-state.test.ts
+    bun test src/integration/assets/opencode/innov-agent-state.test.ts
+    bun test src/integration/assets/opencode/innov-tui-session.test.ts
 
 # Run plugin marketplace Worker tests
 plugin-marketplace-test:
@@ -135,8 +135,8 @@ pre-release-check:
     just release-docs-check
     just bench-render-scale
     @echo "release review required: investigate material render-scaling regressions before publishing."
-    @echo "release review required: update skills/herdr/SKILL.md for this stable release so it matches the current CLI, IDs, agent lifecycle semantics, and safety guidance."
-    @echo "release policy: do not update skills/herdr/SKILL.md between stable releases; preview builds keep the latest stable skill."
+    @echo "release review required: update skills/innov/SKILL.md for this stable release so it matches the current CLI, IDs, agent lifecycle semantics, and safety guidance."
+    @echo "release policy: do not update skills/innov/SKILL.md between stable releases; preview builds keep the latest stable skill."
 
 # Prepare the release commit without tagging or pushing (usage: just release-prepare 0.1.1)
 release-prepare version:
@@ -144,13 +144,13 @@ release-prepare version:
         echo "error: version must look like 0.6.6 without a v prefix"; \
         exit 1; \
     }
-    @if ! git diff --quiet -- . ':(exclude)skills/herdr/SKILL.md' || \
-        ! git diff --cached --quiet -- . ':(exclude)skills/herdr/SKILL.md' || \
+    @if ! git diff --quiet -- . ':(exclude)skills/innov/SKILL.md' || \
+        ! git diff --cached --quiet -- . ':(exclude)skills/innov/SKILL.md' || \
         [ -n "$(git ls-files --others --exclude-standard)" ]; then \
-        echo "error: commit all changes except skills/herdr/SKILL.md first"; \
+        echo "error: commit all changes except skills/innov/SKILL.md first"; \
         exit 1; \
     fi
-    @git fetch origin master --tags
+    @git fetch origin main --tags
     @if git rev-parse "v{{version}}" >/dev/null 2>&1; then \
         echo "error: tag v{{version}} already exists"; \
         exit 1; \
@@ -159,9 +159,9 @@ release-prepare version:
     python3 scripts/changelog.py prepare --version {{version}}
     cp CHANGELOG.md docs/next/CHANGELOG.md
     sed -i.bak 's/^version = ".*"/version = "{{version}}"/' Cargo.toml && rm -f Cargo.toml.bak
-    cargo update -p herdr --offline
+    cargo update -p innov --offline
     just check
-    git add CHANGELOG.md docs/next/CHANGELOG.md Cargo.toml Cargo.lock skills/herdr/SKILL.md
+    git add CHANGELOG.md docs/next/CHANGELOG.md Cargo.toml Cargo.lock skills/innov/SKILL.md
     git diff --cached --quiet || git commit -m "release: v{{version}}"
     @echo "v{{version}} release commit prepared. Review it, then run: just release-publish {{version}}"
 
@@ -176,11 +176,11 @@ release-publish version:
         exit 1; \
     fi
     @branch="$(git branch --show-current)"; \
-    if [ "$branch" != "master" ]; then \
-        echo "error: release-publish must run from master, got $branch"; \
+    if [ "$branch" != "main" ]; then \
+        echo "error: release-publish must run from main, got $branch"; \
         exit 1; \
     fi
-    @git fetch origin master --tags
+    @git fetch origin main --tags
     @if git rev-parse "v{{version}}" >/dev/null 2>&1; then \
         echo "error: tag v{{version}} already exists"; \
         exit 1; \
@@ -191,17 +191,17 @@ release-publish version:
         exit 1; \
     fi
     just release-docs-check
-    python3 scripts/changelog.py extract --version {{version}} --output /tmp/herdr-release-notes-check.md
-    rm -f /tmp/herdr-release-notes-check.md
+    python3 scripts/changelog.py extract --version {{version}} --output /tmp/innov-release-notes-check.md
+    rm -f /tmp/innov-release-notes-check.md
     @local_head="$(git rev-parse HEAD)"; \
-    remote_head="$(git rev-parse origin/master)"; \
+    remote_head="$(git rev-parse origin/main)"; \
     if ! git merge-base --is-ancestor "$remote_head" "$local_head"; then \
-        echo "error: origin/master is not an ancestor of HEAD; pull or rebase before publishing"; \
+        echo "error: origin/main is not an ancestor of HEAD; pull or rebase before publishing"; \
         exit 1; \
     fi; \
     if [ "$local_head" != "$remote_head" ]; then \
-        echo "pushing release commit to origin/master"; \
-        git push origin HEAD:master; \
+        echo "pushing release commit to origin/main"; \
+        git push origin HEAD:main; \
     fi
     git tag -a v{{version}} -m "v{{version}}"
     git push origin v{{version}}

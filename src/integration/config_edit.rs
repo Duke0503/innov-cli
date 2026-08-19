@@ -4,10 +4,10 @@ use std::path::Path;
 use serde_json::{json, Map, Value};
 
 use super::command::{hook_command, legacy_bash_hook_command};
-#[cfg(windows)]
 use super::file_ops::legacy_bash_hook_path;
 use super::{
     HERMES_PLUGIN_INSTALL_NAME, KIMI_CONFIG_BLOCK_BEGIN, KIMI_CONFIG_BLOCK_END, KIMI_HOOK_EVENTS,
+    LEGACY_HERMES_PLUGIN_INSTALL_NAME,
 };
 
 pub(crate) fn ensure_hooks_object<'a>(
@@ -133,7 +133,7 @@ pub(crate) fn ensure_flat_command_hook(
         "type": "command",
         "command": command,
         "timeout": timeout_ms,
-        "description": "Report MastraCode agent state to Herdr",
+        "description": "Report MastraCode agent state to Innov",
     }));
     Ok(())
 }
@@ -367,15 +367,17 @@ pub(crate) fn remove_direct_hook_commands(
 
 pub(crate) fn hook_command_variants(hook_path: &Path, action: Option<&str>) -> Vec<String> {
     let mut commands = vec![hook_command(hook_path, action)];
-    push_unique_command(&mut commands, legacy_bash_hook_command(hook_path, action));
+    let legacy_path = legacy_bash_hook_path(hook_path);
+    push_unique_command(
+        &mut commands,
+        legacy_bash_hook_command(&legacy_path, action),
+    );
 
     #[cfg(windows)]
-    {
-        push_unique_command(
-            &mut commands,
-            legacy_bash_hook_command(&legacy_bash_hook_path(hook_path), action),
-        );
-    }
+    push_unique_command(
+        &mut commands,
+        hook_command(&legacy_path.with_extension("ps1"), action),
+    );
 
     commands
 }
@@ -410,7 +412,7 @@ pub(crate) fn update_hermes_enabled_plugin(content: &str, enabled: bool) -> Stri
         if !result.is_empty() {
             result.push('\n');
         }
-        result.push_str("plugins:\n  enabled:\n    - herdr-agent-state\n");
+        result.push_str("plugins:\n  enabled:\n    - innov-agent-state\n");
         return result;
     };
 
@@ -429,10 +431,10 @@ pub(crate) fn update_hermes_enabled_plugin(content: &str, enabled: bool) -> Stri
 
     if let Some(enabled_index) = enabled_index {
         let line = lines[enabled_index].trim();
-        if line == "enabled: []" || line == "enabled: [] # herdr" {
+        if line == "enabled: []" || line == "enabled: [] # innov" {
             if enabled {
                 lines[enabled_index] = "  enabled:".to_string();
-                lines.insert(enabled_index + 1, "    - herdr-agent-state".to_string());
+                lines.insert(enabled_index + 1, "    - innov-agent-state".to_string());
             }
             return join_yaml_lines(lines, trailing_newline);
         }
@@ -447,12 +449,22 @@ pub(crate) fn update_hermes_enabled_plugin(content: &str, enabled: bool) -> Stri
             .unwrap_or(plugins_end);
         let existing_item_index = lines[list_start..list_end]
             .iter()
-            .position(|line| yaml_list_item_matches(line, HERMES_PLUGIN_INSTALL_NAME))
+            .position(|line| yaml_list_item_is_hermes_plugin(line))
             .map(|offset| list_start + offset);
 
         match (enabled, existing_item_index) {
-            (true, Some(_)) | (false, None) => return content.to_string(),
-            (true, None) => lines.insert(list_start, "    - herdr-agent-state".to_string()),
+            (true, Some(index)) => {
+                if yaml_list_item_matches(&lines[index], LEGACY_HERMES_PLUGIN_INSTALL_NAME) {
+                    lines[index] = lines[index].replace(
+                        LEGACY_HERMES_PLUGIN_INSTALL_NAME,
+                        HERMES_PLUGIN_INSTALL_NAME,
+                    );
+                    return join_yaml_lines(lines, trailing_newline);
+                }
+                return content.to_string();
+            }
+            (false, None) => return content.to_string(),
+            (true, None) => lines.insert(list_start, "    - innov-agent-state".to_string()),
             (false, Some(index)) => {
                 lines.remove(index);
             }
@@ -461,12 +473,21 @@ pub(crate) fn update_hermes_enabled_plugin(content: &str, enabled: bool) -> Stri
     }
 
     if let Some(mut items) = plugins_inline_items {
-        let existing_item_index = items
-            .iter()
-            .position(|item| item == HERMES_PLUGIN_INSTALL_NAME);
+        let existing_item_index = items.iter().position(|item| {
+            item == HERMES_PLUGIN_INSTALL_NAME || item == LEGACY_HERMES_PLUGIN_INSTALL_NAME
+        });
 
         match (enabled, existing_item_index) {
-            (true, Some(_)) | (false, None) => return content.to_string(),
+            (true, Some(index)) => {
+                if items[index] == LEGACY_HERMES_PLUGIN_INSTALL_NAME {
+                    items[index] = HERMES_PLUGIN_INSTALL_NAME.to_string();
+                    let replacement = hermes_flat_plugin_lines(&items);
+                    lines.splice(plugins_index..plugins_end, replacement);
+                    return join_yaml_lines(lines, trailing_newline);
+                }
+                return content.to_string();
+            }
+            (false, None) => return content.to_string(),
             (true, None) => items.insert(0, HERMES_PLUGIN_INSTALL_NAME.to_string()),
             (false, Some(index)) => {
                 items.remove(index);
@@ -481,12 +502,26 @@ pub(crate) fn update_hermes_enabled_plugin(content: &str, enabled: bool) -> Stri
     if let Some(flat_list_start) = flat_list_start {
         let existing_item_index = lines[plugins_index + 1..plugins_end]
             .iter()
-            .position(|line| yaml_list_item_matches_at_indent(line, 2, HERMES_PLUGIN_INSTALL_NAME))
+            .position(|line| yaml_list_item_is_hermes_plugin_at_indent(line, 2))
             .map(|offset| plugins_index + 1 + offset);
 
         match (enabled, existing_item_index) {
-            (true, Some(_)) | (false, None) => return content.to_string(),
-            (true, None) => lines.insert(flat_list_start, "  - herdr-agent-state".to_string()),
+            (true, Some(index)) => {
+                if yaml_list_item_matches_at_indent(
+                    &lines[index],
+                    2,
+                    LEGACY_HERMES_PLUGIN_INSTALL_NAME,
+                ) {
+                    lines[index] = lines[index].replace(
+                        LEGACY_HERMES_PLUGIN_INSTALL_NAME,
+                        HERMES_PLUGIN_INSTALL_NAME,
+                    );
+                    return join_yaml_lines(lines, trailing_newline);
+                }
+                return content.to_string();
+            }
+            (false, None) => return content.to_string(),
+            (true, None) => lines.insert(flat_list_start, "  - innov-agent-state".to_string()),
             (false, Some(index)) => {
                 lines.remove(index);
             }
@@ -496,7 +531,7 @@ pub(crate) fn update_hermes_enabled_plugin(content: &str, enabled: bool) -> Stri
 
     if enabled {
         lines.insert(plugins_index + 1, "  enabled:".to_string());
-        lines.insert(plugins_index + 2, "    - herdr-agent-state".to_string());
+        lines.insert(plugins_index + 2, "    - innov-agent-state".to_string());
         return join_yaml_lines(lines, trailing_newline);
     }
 
@@ -585,6 +620,20 @@ pub(crate) fn yaml_list_item_value_at_indent(line: &str, indent: usize) -> Optio
 pub(crate) fn yaml_list_item_matches_at_indent(line: &str, indent: usize, value: &str) -> bool {
     yaml_list_item_value_at_indent(line, indent)
         .is_some_and(|item| yaml_scalar_value(item) == value)
+}
+
+fn yaml_list_item_is_hermes_plugin(line: &str) -> bool {
+    yaml_list_item_value(line).is_some_and(|item| {
+        let item = yaml_scalar_value(item);
+        item == HERMES_PLUGIN_INSTALL_NAME || item == LEGACY_HERMES_PLUGIN_INSTALL_NAME
+    })
+}
+
+fn yaml_list_item_is_hermes_plugin_at_indent(line: &str, indent: usize) -> bool {
+    yaml_list_item_value_at_indent(line, indent).is_some_and(|item| {
+        let item = yaml_scalar_value(item);
+        item == HERMES_PLUGIN_INSTALL_NAME || item == LEGACY_HERMES_PLUGIN_INSTALL_NAME
+    })
 }
 
 pub(crate) fn yaml_flow_sequence_items(value: &str) -> Option<Vec<String>> {

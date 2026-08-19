@@ -32,9 +32,9 @@ foreach ($functionName in @("Prepend-PathEntry", "Update-PathRegistryEntry")) {
     Invoke-Expression $definition.Extent.Text
 }
 
-$pathTestVariable = "HERDR_INSTALLER_PATH_TEST"
+$pathTestVariable = "INNOV_INSTALLER_PATH_TEST"
 $oldPathTestVariable = [Environment]::GetEnvironmentVariable($pathTestVariable, "Process")
-$testRegistryPath = "Software\HerdrInstallerTests-$([Guid]::NewGuid().ToString('N'))"
+$testRegistryPath = "Software\InnovInstallerTests-$([Guid]::NewGuid().ToString('N'))"
 $testEnvironmentKey = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey($testRegistryPath)
 if ($null -eq $testEnvironmentKey) {
     throw "unable to create temporary installer test registry key"
@@ -46,17 +46,17 @@ try {
         "%$pathTestVariable%\bin;C:\existing",
         [Microsoft.Win32.RegistryValueKind]::ExpandString
     )
-    $pathChanged = Update-PathRegistryEntry -EnvironmentKey $testEnvironmentKey -Entry "C:\Herdr\bin"
+    $pathChanged = Update-PathRegistryEntry -EnvironmentKey $testEnvironmentKey -Entry "C:\Innov\bin"
     if (-not $pathChanged) {
         throw "installer PATH update reported no change"
     }
-    if (Update-PathRegistryEntry -EnvironmentKey $testEnvironmentKey -Entry "C:\Herdr\bin") {
+    if (Update-PathRegistryEntry -EnvironmentKey $testEnvironmentKey -Entry "C:\Innov\bin") {
         throw "installer PATH update was not idempotent"
     }
 
     $options = [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames
     $rawPath = $testEnvironmentKey.GetValue("Path", $null, $options)
-    $expectedPath = "C:\Herdr\bin;%$pathTestVariable%\bin;C:\existing"
+    $expectedPath = "C:\Innov\bin;%$pathTestVariable%\bin;C:\existing"
     if ($rawPath -cne $expectedPath) {
         throw "installer changed raw PATH: expected '$expectedPath', got '$rawPath'"
     }
@@ -70,12 +70,12 @@ try {
 }
 
 $archive = (Resolve-Path -LiteralPath $ArchivePath).Path
-$root = Join-Path $env:RUNNER_TEMP ("herdr-installer-test-" + [Guid]::NewGuid().ToString("N"))
+$root = Join-Path $env:RUNNER_TEMP ("innov-installer-test-" + [Guid]::NewGuid().ToString("N"))
 $webRoot = Join-Path $root "web"
-$herdrHome = Join-Path $root "home"
+$innovHome = Join-Path $root "home"
 $installDir = Join-Path $root "bin"
 New-Item -ItemType Directory -Force -Path $webRoot | Out-Null
-Copy-Item -LiteralPath $archive -Destination (Join-Path $webRoot "herdr-windows-x86_64.zip")
+Copy-Item -LiteralPath $archive -Destination (Join-Path $webRoot "innov-windows-x86_64.zip")
 $hash = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
 
 $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
@@ -88,7 +88,7 @@ $manifest = @{
     build_id = "installer-test"
     assets = @{
         "windows-x86_64" = @{
-            url = "http://127.0.0.1:$port/herdr-windows-x86_64.zip"
+            url = "http://127.0.0.1:$port/innov-windows-x86_64.zip"
             sha256 = $hash
             format = "zip"
         }
@@ -98,10 +98,10 @@ $manifestPath = Join-Path $webRoot "preview.json"
 $manifest | Out-File -LiteralPath $manifestPath -Encoding utf8
 
 $server = $null
-$oldHerdrHome = $env:HERDR_HOME
+$oldInnovHome = $env:INNOV_HOME
 try {
     $server = Start-Process python -ArgumentList @("-m", "http.server", "$port", "--bind", "127.0.0.1", "--directory", $webRoot) -PassThru -WindowStyle Hidden
-    $env:HERDR_HOME = Join-Path $root "unused\..\home"
+    $env:INNOV_HOME = Join-Path $root "unused\..\home"
     $manifestUrl = "http://127.0.0.1:$port/preview.json"
     for ($attempt = 0; $attempt -lt 20; $attempt++) {
         try {
@@ -117,7 +117,7 @@ try {
     & "$PSScriptRoot\..\website\install.ps1" "preview" $manifestUrl $installDir "installer-test" 3
 
     $localInstallDir = Join-Path $root "local-bin"
-    $env:HERDR_HOME = Join-Path $root "local-home"
+    $env:INNOV_HOME = Join-Path $root "local-home"
     $partialLocalModeRejected = $false
     try {
         & $installerPath `
@@ -143,7 +143,7 @@ try {
             -LocalPackageIdentity "0.0.0-preview.local-package" `
             -LocalPackageSha256 ("0" * 64)
     } catch {
-        if ($_.Exception.Message -notlike "Downloaded Herdr checksum did not match.*") {
+        if ($_.Exception.Message -notlike "Downloaded Innov checksum did not match.*") {
             throw
         }
         $badLocalChecksumRejected = $true
@@ -159,14 +159,14 @@ try {
         -LocalPackageFormat "zip" `
         -LocalPackageIdentity "0.0.0-preview.local-package" `
         -LocalPackageSha256 $hash
-    if (-not (Test-Path -LiteralPath (Join-Path $localInstallDir "herdr.exe") -PathType Leaf)) {
+    if (-not (Test-Path -LiteralPath (Join-Path $localInstallDir "innov.exe") -PathType Leaf)) {
         throw "installer did not activate the verified local package"
     }
-    $env:HERDR_HOME = $herdrHome
+    $env:INNOV_HOME = $innovHome
 
     $required = @(
-        "herdr.exe",
-        "conpty\herdr-conpty.json",
+        "innov.exe",
+        "conpty\innov-conpty.json",
         "conpty\conpty.dll",
         "conpty\x64\OpenConsole.exe",
         "conpty\arm64\OpenConsole.exe",
@@ -179,7 +179,7 @@ try {
         }
     }
 
-    $releasesDir = Join-Path $herdrHome "packages\standalone\releases"
+    $releasesDir = Join-Path $innovHome "packages\standalone\releases"
     $releaseDir = Get-ChildItem -LiteralPath $releasesDir -Directory |
         Where-Object { -not $_.Name.StartsWith(".staging.") } |
         Select-Object -First 1
@@ -206,7 +206,7 @@ try {
     if (-not $downloadFailed) {
         throw "installer repair unexpectedly accepted a missing archive"
     }
-    if (-not (Test-Path -LiteralPath (Join-Path $releaseDir.FullName "herdr.exe") -PathType Leaf)) {
+    if (-not (Test-Path -LiteralPath (Join-Path $releaseDir.FullName "innov.exe") -PathType Leaf)) {
         throw "failed repair removed the existing release"
     }
 
@@ -217,7 +217,7 @@ try {
     $transientLockTimer = New-Object System.Timers.Timer
     $transientLockTimer.Interval = 300
     $transientLockTimer.AutoReset = $false
-    $transientLockSource = "HerdrTransientInstallerLock-$PID"
+    $transientLockSource = "InnovTransientInstallerLock-$PID"
     $transientLockRelease = Register-ObjectEvent `
         -InputObject $transientLockTimer `
         -EventName Elapsed `
@@ -298,14 +298,14 @@ try {
         if (-not $swapFailed) {
             throw "installer unexpectedly activated a release with a locked staged file"
         }
-        if (-not (Test-Path -LiteralPath (Join-Path $releaseDir.FullName "herdr.exe") -PathType Leaf)) {
+        if (-not (Test-Path -LiteralPath (Join-Path $releaseDir.FullName "innov.exe") -PathType Leaf)) {
             throw "failed activation did not restore the prior release"
         }
         if (@(Get-ChildItem -LiteralPath $releasesDir -Force -Directory -Filter ".backup.$($releaseDir.Name).*").Count -ne 0) {
             throw "failed activation stranded a release backup"
         }
-        foreach ($junction in @($installDir, (Join-Path $herdrHome "packages\standalone\current"))) {
-            if (-not (Test-Path -LiteralPath (Join-Path $junction "herdr.exe") -PathType Leaf)) {
+        foreach ($junction in @($installDir, (Join-Path $innovHome "packages\standalone\current"))) {
+            if (-not (Test-Path -LiteralPath (Join-Path $junction "innov.exe") -PathType Leaf)) {
                 throw "failed activation left an invalid installer junction at $junction"
             }
         }
@@ -353,7 +353,7 @@ try {
         throw "installer accepted a manifest that did not match the updater-selected build"
     }
 } finally {
-    $env:HERDR_HOME = $oldHerdrHome
+    $env:INNOV_HOME = $oldInnovHome
     if ($null -ne $server -and -not $server.HasExited) {
         Stop-Process -Id $server.Id -Force -ErrorAction SilentlyContinue
     }

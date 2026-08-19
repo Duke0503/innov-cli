@@ -2264,9 +2264,9 @@ mod tests {
         app.state.ensure_test_terminals();
         app.state.workspaces[0].worktree_space = Some(crate::workspace::WorktreeSpaceMembership {
             key: "repo-key".into(),
-            label: "herdr".into(),
-            repo_root: "/repo/herdr".into(),
-            checkout_path: "/repo/herdr-issue".into(),
+            label: "innov".into(),
+            repo_root: "/repo/innov".into(),
+            checkout_path: "/repo/innov-issue".into(),
             is_linked_worktree: true,
         });
         app
@@ -2282,7 +2282,7 @@ mod tests {
                         .or_insert_with(|| {
                             crate::terminal::TerminalState::new(
                                 pane.attached_terminal_id.clone(),
-                                std::path::PathBuf::from("/herdr-test"),
+                                std::path::PathBuf::from("/innov-test"),
                             )
                         });
                 }
@@ -4095,7 +4095,7 @@ mod tests {
     fn pane_report_metadata_rejects_invalid_applies_to_source() {
         let (mut app, pane_id) = app_with_test_workspace();
         let mut params = metadata_params(pane_id);
-        params.applies_to_source = Some("herdr source".into());
+        params.applies_to_source = Some("innov source".into());
 
         let response = app.handle_pane_report_metadata("req".into(), params);
 

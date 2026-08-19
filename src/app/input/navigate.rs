@@ -885,6 +885,10 @@ impl App {
         )];
         if let Ok(current_exe) = std::env::current_exe() {
             env.push((
+                "INNOV_BIN_PATH".to_string(),
+                current_exe.display().to_string(),
+            ));
+            env.push((
                 "HERDR_BIN_PATH".to_string(),
                 current_exe.display().to_string(),
             ));
@@ -892,26 +896,32 @@ impl App {
 
         let mut cwd = None;
         if let Some(ws_idx) = self.state.active {
+            let workspace_id = self.public_workspace_id(ws_idx);
             env.push((
-                "HERDR_ACTIVE_WORKSPACE_ID".to_string(),
-                self.public_workspace_id(ws_idx),
+                "INNOV_ACTIVE_WORKSPACE_ID".to_string(),
+                workspace_id.clone(),
             ));
+            env.push(("HERDR_ACTIVE_WORKSPACE_ID".to_string(), workspace_id));
             if let Some(workspace) = self.state.workspaces.get(ws_idx) {
                 let tab_idx = workspace.active_tab_index();
                 if let Some(tab_id) = self.public_tab_id(ws_idx, tab_idx) {
+                    env.push(("INNOV_ACTIVE_TAB_ID".to_string(), tab_id.clone()));
                     env.push(("HERDR_ACTIVE_TAB_ID".to_string(), tab_id));
                 }
                 if let Some(pane_id) = workspace.focused_pane_id() {
                     if let Some(public_pane_id) = self.public_pane_id(ws_idx, pane_id) {
+                        env.push(("INNOV_ACTIVE_PANE_ID".to_string(), public_pane_id.clone()));
                         env.push(("HERDR_ACTIVE_PANE_ID".to_string(), public_pane_id));
                     }
                     if let Some(pane_cwd) = workspace.active_tab().and_then(|tab| {
                         tab.cwd_for_pane(pane_id, &self.state.terminals, &self.terminal_runtimes)
                     }) {
+                        let pane_cwd_display = pane_cwd.display().to_string();
                         env.push((
-                            "HERDR_ACTIVE_PANE_CWD".to_string(),
-                            pane_cwd.display().to_string(),
+                            "INNOV_ACTIVE_PANE_CWD".to_string(),
+                            pane_cwd_display.clone(),
                         ));
+                        env.push(("HERDR_ACTIVE_PANE_CWD".to_string(), pane_cwd_display));
                         if pane_cwd.is_dir() {
                             cwd = Some(pane_cwd);
                         }
@@ -2002,7 +2012,7 @@ fn unique_scrollback_path(attempt: u32) -> std::path::PathBuf {
         .map(|duration| duration.as_nanos())
         .unwrap_or(0);
     std::env::temp_dir().join(format!(
-        "herdr-scrollback-{}-{nanos}-{attempt}.txt",
+        "innov-scrollback-{}-{nanos}-{attempt}.txt",
         std::process::id()
     ))
 }
@@ -2031,8 +2041,8 @@ mod tests {
     fn mark_worktree_space_member(state: &mut AppState, ws_idx: usize, key: &str) {
         state.workspaces[ws_idx].worktree_space = Some(crate::workspace::WorktreeSpaceMembership {
             key: key.into(),
-            label: "herdr".into(),
-            repo_root: "/repo/herdr".into(),
+            label: "innov".into(),
+            repo_root: "/repo/innov".into(),
             checkout_path: format!("/repo/worktree-{ws_idx}").into(),
             is_linked_worktree: ws_idx != 0,
         });
@@ -2121,10 +2131,10 @@ mod tests {
             .attached_terminal_id
             .clone();
         state.workspaces[0].custom_name = None;
-        state.workspaces[0].identity_cwd = "/__herdr_original__".into();
+        state.workspaces[0].identity_cwd = "/__innov_original__".into();
         state.terminals.insert(
             terminal_id.clone(),
-            TerminalState::new(terminal_id, "/__herdr_projects__".into()),
+            TerminalState::new(terminal_id, "/__innov_projects__".into()),
         );
         state.keybinds.rename_workspace = crate::config::ActionKeybinds::prefix("g");
 
@@ -2134,8 +2144,8 @@ mod tests {
         );
 
         assert_eq!(state.mode, Mode::RenameWorkspace);
-        assert_eq!(state.name_input, "__herdr_projects__");
-        assert_eq!(state.workspaces[0].display_name(), "__herdr_original__");
+        assert_eq!(state.name_input, "__innov_projects__");
+        assert_eq!(state.workspaces[0].display_name(), "__innov_original__");
     }
 
     #[test]
@@ -2168,9 +2178,9 @@ mod tests {
         state.confirm_close = false;
         state.workspaces[1].worktree_space = Some(crate::workspace::WorktreeSpaceMembership {
             key: "repo-key".into(),
-            label: "herdr".into(),
-            repo_root: "/repo/herdr".into(),
-            checkout_path: "/repo/herdr-issue".into(),
+            label: "innov".into(),
+            repo_root: "/repo/innov".into(),
+            checkout_path: "/repo/innov-issue".into(),
             is_linked_worktree: true,
         });
 
@@ -3423,9 +3433,9 @@ navigate_pane_down = "ctrl+j"
         state.confirm_close = false;
         state.workspaces[1].worktree_space = Some(crate::workspace::WorktreeSpaceMembership {
             key: "repo-key".into(),
-            label: "herdr".into(),
-            repo_root: "/repo/herdr".into(),
-            checkout_path: "/repo/herdr-issue".into(),
+            label: "innov".into(),
+            repo_root: "/repo/innov".into(),
+            checkout_path: "/repo/innov-issue".into(),
             is_linked_worktree: true,
         });
 
@@ -3504,7 +3514,7 @@ navigate_pane_down = "ctrl+j"
         let output_path = unique_temp_path("custom-command-keybind");
         let release_path = unique_temp_path("custom-command-release");
         let command = format!(
-            "printf '%s\\n%s\\n%s\\n%s\\n' \"$$\" \"$HERDR_ACTIVE_WORKSPACE_ID\" \"$HERDR_ACTIVE_TAB_ID\" \"$HERDR_ACTIVE_PANE_ID\" > '{}'; i=0; while [ ! -e '{}' ] && [ \"$i\" -lt 250 ]; do sleep 0.02; i=$((i + 1)); done",
+            "printf '%s\\n%s\\n%s\\n%s\\n' \"$$\" \"$INNOV_ACTIVE_WORKSPACE_ID\" \"$INNOV_ACTIVE_TAB_ID\" \"$INNOV_ACTIVE_PANE_ID\" > '{}'; i=0; while [ ! -e '{}' ] && [ \"$i\" -lt 250 ]; do sleep 0.02; i=$((i + 1)); done",
             output_path.display(),
             release_path.display(),
         );

@@ -1,9 +1,9 @@
 # Past sponsors
 
-herdr's sponsorship program is closed to new sponsors.
-This file permanently lists everyone who backed herdr.
+innov's sponsorship program is closed to new sponsors.
+This file permanently lists everyone who backed innov.
 
-→ Enterprise / partnership: hey@herdr.dev
+→ Enterprise / partnership: hey@innov.dev
 
 ## Gold
 
@@ -64,4 +64,4 @@ This file permanently lists everyone who backed herdr.
 
 ---
 
-Thank you to everyone who supported herdr. 🐑
+Thank you to everyone who supported innov. 🐑

@@ -1,6 +1,6 @@
 # Versioned documentation
 
-This directory contains the published documentation for stable Herdr releases.
+This directory contains the published documentation for stable Innov releases.
 
 Release CI creates each version from the tagged `docs/next` tree after the GitHub Release succeeds. Maintainers can correct published documentation in its version directory afterward. When a correction also applies to future releases, make the same focused change under `docs/next`; do not replace a published tree with the current draft.
 

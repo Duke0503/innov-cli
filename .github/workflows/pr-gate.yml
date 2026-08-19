@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   check-contributor:
-    if: github.repository == 'herdrdev/herdr'
+    if: github.repository == 'Duke0503/cli'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -28,7 +28,7 @@ jobs:
               41898282, // github-actions[bot]
             ]);
             const REVIEW_LABEL = 'ai-review';
-            const COMMENT_MARKER = '<!-- herdr:pr-gate -->';
+            const COMMENT_MARKER = '<!-- innov:pr-gate -->';
 
             const pullNumber = context.payload.pull_request.number;
             const defaultBranch = context.payload.repository.default_branch;
@@ -170,11 +170,11 @@ jobs:
               const message = [
                 `Hi @${prAuthor}, thanks for your interest in contributing.`,
                 '',
-                'Herdr does not accept unsolicited implementation pull requests from contributors who are not listed in `.github/APPROVED_CONTRIBUTORS`.',
+                'Innov does not accept unsolicited implementation pull requests from contributors who are not listed in `.github/APPROVED_CONTRIBUTORS`.',
                 '',
                 reason,
                 '',
-                'If you encountered a reproducible bug, report the observed behavior through the bug issue template. A report does not reserve the work or authorize a pull request; accepted fixes are normally implemented by Herdr’s maintainer-controlled agents.',
+                'If you encountered a reproducible bug, report the observed behavior through the bug issue template. A report does not reserve the work or authorize a pull request; accepted fixes are normally implemented by Innov’s maintainer-controlled agents.',
                 '',
                 'Feature requests, behavior changes, and other proposals belong in GitHub Discussions. Do not open an issue merely to justify an implementation that was already written.',
                 '',

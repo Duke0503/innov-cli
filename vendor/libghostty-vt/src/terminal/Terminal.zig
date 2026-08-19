@@ -1877,7 +1877,7 @@ fn semanticPromptFreshLine(self: *Terminal) !void {
 /// requires integration with the shell. By default, we mark a line as "none"
 /// meaning we don't know what type it is.
 ///
-/// See: https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
+/// See: https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/main/proposals/semantic-prompts.md
 pub const SemanticPrompt = enum {
     prompt,
     prompt_continuation,

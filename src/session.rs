@@ -7,7 +7,8 @@ use interprocess::local_socket::traits::Stream as _;
 
 use crate::ipc::LocalStream;
 
-pub const SESSION_ENV_VAR: &str = "HERDR_SESSION";
+pub const SESSION_ENV_VAR: &str = "INNOV_SESSION";
+pub const LEGACY_SESSION_ENV_VARS: &[&str] = &["CLI_SESSION", "HERDR_SESSION"];
 pub const DEFAULT_SESSION_NAME: &str = "default";
 
 const MAX_SESSION_NAME_LEN: usize = 64;
@@ -42,10 +43,10 @@ pub fn configure_from_args(args: &[String]) -> Result<Vec<String>, String> {
             return Ok(args.to_vec());
         }
         let Some(name) = args.get(3) else {
-            return Err("usage: herdr session attach <name>".to_string());
+            return Err("usage: innov session attach <name>".to_string());
         };
         if args.len() != 4 {
-            return Err("usage: herdr session attach <name>".to_string());
+            return Err("usage: innov session attach <name>".to_string());
         }
         apply_explicit_name(name)?;
         return Ok(cleaned);
@@ -79,11 +80,14 @@ pub fn configure_from_args(args: &[String]) -> Result<Vec<String>, String> {
 
     if let Some(session) = requested_session {
         apply_explicit_name(&session)?;
-    } else if std::env::var_os(crate::api::SOCKET_PATH_ENV_VAR).is_some() {
+    } else if crate::api::socket_path_override().is_some() {
         EXPLICIT_SESSION_REQUESTED.store(false, Ordering::Relaxed);
-    } else if let Ok(session) = std::env::var(SESSION_ENV_VAR) {
+    } else if let Some(session) = session_env_value() {
         if normalize_name(&session)?.is_none() {
             std::env::remove_var(SESSION_ENV_VAR);
+            for name in LEGACY_SESSION_ENV_VARS {
+                std::env::remove_var(name);
+            }
         }
         EXPLICIT_SESSION_REQUESTED.store(false, Ordering::Relaxed);
     } else {
@@ -94,16 +98,23 @@ pub fn configure_from_args(args: &[String]) -> Result<Vec<String>, String> {
 }
 
 pub fn active_name() -> Option<String> {
-    std::env::var(SESSION_ENV_VAR)
-        .ok()
+    session_env_value()
         .filter(|name| name != DEFAULT_SESSION_NAME)
         .filter(|name| validate_name(name).is_ok())
 }
 
+fn session_env_value() -> Option<String> {
+    std::env::var(SESSION_ENV_VAR).ok().or_else(|| {
+        LEGACY_SESSION_ENV_VARS
+            .iter()
+            .find_map(|name| std::env::var(name).ok())
+    })
+}
+
 pub fn local_attach_command() -> String {
     match active_name() {
-        Some(name) => format!("cli session attach {name}"),
-        None => "cli".to_string(),
+        Some(name) => format!("innov session attach {name}"),
+        None => "innov".to_string(),
     }
 }
 
@@ -113,15 +124,15 @@ pub fn local_stop_command() -> String {
 
 pub fn stop_command_for(name: Option<&str>) -> String {
     match name {
-        Some(name) => format!("cli session stop {name}"),
-        None => "cli server stop".to_string(),
+        Some(name) => format!("innov session stop {name}"),
+        None => "innov server stop".to_string(),
     }
 }
 
 pub fn restart_after_update_guidance(stop_command: &str, attach_command: Option<&str>) -> String {
     let restart = match attach_command {
         Some(command) => format!("Run `{stop_command}`, then run `{command}` again."),
-        None => format!("Run `{stop_command}`, then restart CLI with the same socket override."),
+        None => format!("Run `{stop_command}`, then restart Innov with the same socket override."),
     };
     format!(
         "Stop the old server to use the new version.\nStopping exits pane processes.\n{restart}"
@@ -130,10 +141,12 @@ pub fn restart_after_update_guidance(stop_command: &str, attach_command: Option<
 
 pub fn active_restart_after_update_guidance() -> String {
     if !explicit_session_requested() {
-        if let Ok(socket_path) = std::env::var(crate::api::SOCKET_PATH_ENV_VAR) {
+        if let Some(socket_path) =
+            crate::api::socket_path_override().and_then(|path| path.into_string().ok())
+        {
             return restart_after_update_guidance(
                 &format!(
-                    "{}={} cli server stop",
+                    "{}={} innov server stop",
                     crate::api::SOCKET_PATH_ENV_VAR,
                     socket_path
                 ),
@@ -167,21 +180,21 @@ pub fn data_dir_for(name: Option<&str>) -> PathBuf {
 }
 
 pub fn api_socket_path_for(name: Option<&str>) -> PathBuf {
-    data_dir_for(name).join("herdr.sock")
+    data_dir_for(name).join("innov.sock")
 }
 
 pub fn active_api_socket_path() -> PathBuf {
     if explicit_session_requested() {
         return api_socket_path_for(active_name().as_deref());
     }
-    if let Ok(path) = std::env::var(crate::api::SOCKET_PATH_ENV_VAR) {
+    if let Some(path) = crate::api::socket_path_override() {
         return PathBuf::from(path);
     }
     api_socket_path_for(active_name().as_deref())
 }
 
 pub fn client_socket_path_for(name: Option<&str>) -> PathBuf {
-    data_dir_for(name).join("herdr-client.sock")
+    data_dir_for(name).join("innov-client.sock")
 }
 
 pub fn list_sessions() -> std::io::Result<Vec<SessionInfo>> {
@@ -482,7 +495,7 @@ mod tests {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        std::env::temp_dir().join(format!("herdr-{name}-{}-{nanos}", std::process::id()))
+        std::env::temp_dir().join(format!("innov-{name}-{}-{nanos}", std::process::id()))
     }
 
     #[cfg(unix)]
@@ -623,7 +636,7 @@ mod tests {
         std::env::remove_var(SESSION_ENV_VAR);
         clear_explicit_session_for_test();
         let args = vec![
-            "herdr".to_string(),
+            "innov".to_string(),
             "--session".to_string(),
             "work".to_string(),
             "workspace".to_string(),
@@ -634,7 +647,7 @@ mod tests {
 
         assert_eq!(std::env::var(SESSION_ENV_VAR).as_deref(), Ok("work"));
         assert!(explicit_session_requested());
-        assert_eq!(cleaned, vec!["herdr", "workspace", "list"]);
+        assert_eq!(cleaned, vec!["innov", "workspace", "list"]);
         std::env::remove_var(SESSION_ENV_VAR);
         clear_explicit_session_for_test();
     }
@@ -645,7 +658,7 @@ mod tests {
         std::env::remove_var(SESSION_ENV_VAR);
         clear_explicit_session_for_test();
         let args = vec![
-            "herdr".to_string(),
+            "innov".to_string(),
             "server".to_string(),
             "stop".to_string(),
             "--session=api".to_string(),
@@ -655,7 +668,7 @@ mod tests {
 
         assert_eq!(std::env::var(SESSION_ENV_VAR).as_deref(), Ok("api"));
         assert!(explicit_session_requested());
-        assert_eq!(cleaned, vec!["herdr", "server", "stop"]);
+        assert_eq!(cleaned, vec!["innov", "server", "stop"]);
         std::env::remove_var(SESSION_ENV_VAR);
         clear_explicit_session_for_test();
     }
@@ -666,7 +679,7 @@ mod tests {
         std::env::remove_var(SESSION_ENV_VAR);
         clear_explicit_session_for_test();
         let args = vec![
-            "herdr".to_string(),
+            "innov".to_string(),
             "agent".to_string(),
             "start".to_string(),
             "repro".to_string(),
@@ -689,7 +702,7 @@ mod tests {
         std::env::remove_var(SESSION_ENV_VAR);
         clear_explicit_session_for_test();
         let args = vec![
-            "herdr".to_string(),
+            "innov".to_string(),
             "agent".to_string(),
             "start".to_string(),
             "repro".to_string(),
@@ -712,7 +725,7 @@ mod tests {
         std::env::set_var(crate::api::SOCKET_PATH_ENV_VAR, "/tmp/inherited.sock");
         clear_explicit_session_for_test();
         let args = vec![
-            "herdr".to_string(),
+            "innov".to_string(),
             "session".to_string(),
             "attach".to_string(),
             "work".to_string(),
@@ -722,7 +735,7 @@ mod tests {
 
         assert_eq!(std::env::var(SESSION_ENV_VAR).as_deref(), Ok("work"));
         assert!(explicit_session_requested());
-        assert_eq!(cleaned, vec!["herdr"]);
+        assert_eq!(cleaned, vec!["innov"]);
         std::env::remove_var(SESSION_ENV_VAR);
         std::env::remove_var(crate::api::SOCKET_PATH_ENV_VAR);
         clear_explicit_session_for_test();
@@ -734,7 +747,7 @@ mod tests {
         std::env::remove_var(SESSION_ENV_VAR);
         clear_explicit_session_for_test();
         let args = vec![
-            "herdr".to_string(),
+            "innov".to_string(),
             "session".to_string(),
             "attach".to_string(),
             "-h".to_string(),
@@ -750,13 +763,13 @@ mod tests {
     fn configure_from_args_maps_default_session_name_to_default_path() {
         let _guard = env_lock().lock().unwrap();
         let config_home =
-            std::env::temp_dir().join(format!("herdr-session-default-{}", std::process::id()));
+            std::env::temp_dir().join(format!("innov-session-default-{}", std::process::id()));
         std::env::set_var("XDG_CONFIG_HOME", &config_home);
         std::env::set_var(SESSION_ENV_VAR, "work");
         clear_explicit_session_for_test();
         std::env::set_var(crate::api::SOCKET_PATH_ENV_VAR, "/tmp/inherited.sock");
         let args = vec![
-            "herdr".to_string(),
+            "innov".to_string(),
             "--session".to_string(),
             DEFAULT_SESSION_NAME.to_string(),
             "workspace".to_string(),
@@ -765,14 +778,14 @@ mod tests {
 
         let cleaned = configure_from_args(&args).unwrap();
 
-        assert_eq!(cleaned, vec!["herdr", "workspace", "list"]);
+        assert_eq!(cleaned, vec!["innov", "workspace", "list"]);
         assert!(std::env::var(SESSION_ENV_VAR).is_err());
         assert!(explicit_session_requested());
         assert_eq!(
             active_api_socket_path(),
             config_home
                 .join(crate::config::app_dir_name())
-                .join("herdr.sock")
+                .join("innov.sock")
         );
         std::env::remove_var("XDG_CONFIG_HOME");
         std::env::remove_var(SESSION_ENV_VAR);
@@ -786,14 +799,14 @@ mod tests {
         std::env::set_var(SESSION_ENV_VAR, "env-session");
         EXPLICIT_SESSION_REQUESTED.store(true, Ordering::Relaxed);
         let args = vec![
-            "herdr".to_string(),
+            "innov".to_string(),
             "workspace".to_string(),
             "list".to_string(),
         ];
 
         let cleaned = configure_from_args(&args).unwrap();
 
-        assert_eq!(cleaned, vec!["herdr", "workspace", "list"]);
+        assert_eq!(cleaned, vec!["innov", "workspace", "list"]);
         assert_eq!(std::env::var(SESSION_ENV_VAR).as_deref(), Ok("env-session"));
         assert!(!explicit_session_requested());
         std::env::remove_var(SESSION_ENV_VAR);
@@ -803,27 +816,27 @@ mod tests {
     fn env_default_session_name_uses_default_path() {
         let _guard = env_lock().lock().unwrap();
         let config_home =
-            std::env::temp_dir().join(format!("herdr-env-session-default-{}", std::process::id()));
+            std::env::temp_dir().join(format!("innov-env-session-default-{}", std::process::id()));
         std::env::set_var("XDG_CONFIG_HOME", &config_home);
         std::env::remove_var(crate::api::SOCKET_PATH_ENV_VAR);
         std::env::set_var(SESSION_ENV_VAR, DEFAULT_SESSION_NAME);
         EXPLICIT_SESSION_REQUESTED.store(true, Ordering::Relaxed);
         let args = vec![
-            "herdr".to_string(),
+            "innov".to_string(),
             "workspace".to_string(),
             "list".to_string(),
         ];
 
         let cleaned = configure_from_args(&args).unwrap();
 
-        assert_eq!(cleaned, vec!["herdr", "workspace", "list"]);
+        assert_eq!(cleaned, vec!["innov", "workspace", "list"]);
         assert!(std::env::var(SESSION_ENV_VAR).is_err());
         assert!(!explicit_session_requested());
         assert_eq!(
             active_api_socket_path(),
             config_home
                 .join(crate::config::app_dir_name())
-                .join("herdr.sock")
+                .join("innov.sock")
         );
         std::env::remove_var("XDG_CONFIG_HOME");
         std::env::remove_var(SESSION_ENV_VAR);
@@ -836,7 +849,7 @@ mod tests {
         let _guard = env_lock().lock().unwrap();
         std::env::remove_var(SESSION_ENV_VAR);
 
-        assert_eq!(local_attach_command(), "cli");
+        assert_eq!(local_attach_command(), "innov");
     }
 
     #[test]
@@ -844,7 +857,7 @@ mod tests {
         let _guard = env_lock().lock().unwrap();
         std::env::set_var(SESSION_ENV_VAR, "work");
 
-        assert_eq!(local_attach_command(), "cli session attach work");
+        assert_eq!(local_attach_command(), "innov session attach work");
 
         std::env::remove_var(SESSION_ENV_VAR);
     }
@@ -854,7 +867,7 @@ mod tests {
         let _guard = env_lock().lock().unwrap();
         std::env::remove_var(SESSION_ENV_VAR);
 
-        assert_eq!(local_stop_command(), "cli server stop");
+        assert_eq!(local_stop_command(), "innov server stop");
 
         std::env::remove_var(SESSION_ENV_VAR);
     }
@@ -864,7 +877,7 @@ mod tests {
         let _guard = env_lock().lock().unwrap();
         std::env::set_var(SESSION_ENV_VAR, "work");
 
-        assert_eq!(local_stop_command(), "cli session stop work");
+        assert_eq!(local_stop_command(), "innov session stop work");
 
         std::env::remove_var(SESSION_ENV_VAR);
     }
@@ -873,10 +886,10 @@ mod tests {
     fn restart_after_update_guidance_names_stop_and_attach_commands() {
         assert_eq!(
             restart_after_update_guidance(
-                "cli session stop work",
-                Some("cli session attach work")
+                "innov session stop work",
+                Some("innov session attach work")
             ),
-            "Stop the old server to use the new version.\nStopping exits pane processes.\nRun `cli session stop work`, then run `cli session attach work` again."
+            "Stop the old server to use the new version.\nStopping exits pane processes.\nRun `innov session stop work`, then run `innov session attach work` again."
         );
     }
 
@@ -889,7 +902,7 @@ mod tests {
 
         assert_eq!(
             active_restart_after_update_guidance(),
-            "Stop the old server to use the new version.\nStopping exits pane processes.\nRun `HERDR_SOCKET_PATH=/tmp/custom-cli.sock cli server stop`, then restart CLI with the same socket override."
+            "Stop the old server to use the new version.\nStopping exits pane processes.\nRun `INNOV_SOCKET_PATH=/tmp/custom-cli.sock innov server stop`, then restart Innov with the same socket override."
         );
 
         std::env::remove_var(crate::api::SOCKET_PATH_ENV_VAR);
@@ -899,7 +912,7 @@ mod tests {
     fn explicit_session_socket_ignores_inherited_socket_override() {
         let _guard = env_lock().lock().unwrap();
         let config_home =
-            std::env::temp_dir().join(format!("herdr-session-precedence-{}", std::process::id()));
+            std::env::temp_dir().join(format!("innov-session-precedence-{}", std::process::id()));
         std::env::set_var("XDG_CONFIG_HOME", &config_home);
         std::env::set_var(SESSION_ENV_VAR, "work");
         EXPLICIT_SESSION_REQUESTED.store(true, Ordering::Relaxed);
@@ -913,7 +926,7 @@ mod tests {
                 .join(crate::config::app_dir_name())
                 .join("sessions")
                 .join("work")
-                .join("herdr.sock")
+                .join("innov.sock")
         );
         std::env::remove_var("XDG_CONFIG_HOME");
         std::env::remove_var(SESSION_ENV_VAR);
@@ -945,14 +958,14 @@ mod tests {
         clear_explicit_session_for_test();
         std::env::set_var(crate::api::SOCKET_PATH_ENV_VAR, "/tmp/cli.sock");
         let args = vec![
-            "herdr".to_string(),
+            "innov".to_string(),
             "workspace".to_string(),
             "list".to_string(),
         ];
 
         let cleaned = configure_from_args(&args).unwrap();
 
-        assert_eq!(cleaned, vec!["herdr", "workspace", "list"]);
+        assert_eq!(cleaned, vec!["innov", "workspace", "list"]);
         assert!(!explicit_session_requested());
         assert_eq!(active_api_socket_path(), PathBuf::from("/tmp/cli.sock"));
         assert_eq!(std::env::var(SESSION_ENV_VAR).as_deref(), Ok("bad/name"));
@@ -1037,7 +1050,7 @@ mod tests {
     fn list_sessions_skips_reserved_default_directory() {
         let _guard = env_lock().lock().unwrap();
         let config_home =
-            std::env::temp_dir().join(format!("herdr-session-list-{}", std::process::id()));
+            std::env::temp_dir().join(format!("innov-session-list-{}", std::process::id()));
         let sessions_dir = config_home
             .join(crate::config::app_dir_name())
             .join("sessions");

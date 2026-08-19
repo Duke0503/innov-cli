@@ -1,5 +1,5 @@
 [package]
-name = "cli"
+name = "innov"
 version = "0.8.0"
 edition = "2021"
 build = "build.rs"
@@ -12,8 +12,8 @@ categories = ["command-line-utilities"]
 include = [
     "src/**/*",
     "assets/sounds/*",
-    "docs/next/api/herdr-api.schema.json",
-    "skills/herdr/SKILL.md",
+    "docs/next/api/innov-api.schema.json",
+    "skills/innov/SKILL.md",
     "website/install.ps1",
     "README.md",
     "LICENSE",

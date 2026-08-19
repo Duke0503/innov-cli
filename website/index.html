@@ -3,49 +3,49 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Herdr: the runtime coding agents run on</title>
+        <title>Innov: the runtime coding agents run on</title>
         <meta
             name="description"
-            content="Herdr is the runtime your coding agents live on. It holds real terminals open on your laptop, your desktop or a box you rent, so the work survives the lid closing — and you can attach again from anything with a keyboard."
+            content="Innov is the runtime your coding agents live on. It holds real terminals open on your laptop, your desktop or a box you rent, so the work survives the lid closing — and you can attach again from anything with a keyboard."
         />
         <meta name="theme-color" content="#17171a" />
-        <link rel="canonical" href="https://herdr.dev/" />
+        <link rel="canonical" href="https://innov.dev/" />
 
         <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="Herdr" />
-        <meta property="og:title" content="Herdr: the runtime coding agents run on" />
+        <meta property="og:site_name" content="Innov" />
+        <meta property="og:title" content="Innov: the runtime coding agents run on" />
         <meta
             property="og:description"
-            content="Run them anywhere. Leave them running. Herdr holds real terminals open so your agents keep working when you close the laptop, and gets you back in from any tty."
+            content="Run them anywhere. Leave them running. Innov holds real terminals open so your agents keep working when you close the laptop, and gets you back in from any tty."
         />
-        <meta property="og:url" content="https://herdr.dev/" />
+        <meta property="og:url" content="https://innov.dev/" />
         <meta
             property="og:image"
-            content="https://herdr.dev/assets/og-card-v9.png"
+            content="https://innov.dev/assets/og-card-v9.png"
         />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt" content="Herdr — run them anywhere, leave them running." />
+        <meta property="og:image:alt" content="Innov — run them anywhere, leave them running." />
         <script type="application/ld+json">
             {
                 "@context": "https://schema.org",
                 "@type": "WebPage",
-                "url": "https://herdr.dev/",
-                "primaryImageOfPage": "https://herdr.dev/assets/og-card-v9.png"
+                "url": "https://innov.dev/",
+                "primaryImageOfPage": "https://innov.dev/assets/og-card-v9.png"
             }
         </script>
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Herdr: the runtime coding agents run on" />
+        <meta name="twitter:title" content="Innov: the runtime coding agents run on" />
         <meta
             name="twitter:description"
-            content="Run them anywhere. Leave them running. Herdr holds real terminals open so your agents keep working when you close the laptop."
+            content="Run them anywhere. Leave them running. Innov holds real terminals open so your agents keep working when you close the laptop."
         />
         <meta
             name="twitter:image"
-            content="https://herdr.dev/assets/og-card-v9.png"
+            content="https://innov.dev/assets/og-card-v9.png"
         />
-        <meta name="twitter:image:alt" content="Herdr — run them anywhere, leave them running." />
+        <meta name="twitter:image:alt" content="Innov — run them anywhere, leave them running." />
 
         <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png?v=14" />
         <link rel="apple-touch-icon" href="/assets/logo.png" />
@@ -67,7 +67,7 @@
                dark, because the default here is a presentation decision and
                must not follow the reader's OS. The mock palette follows the
                ground: solarized-light on paper, catppuccin on ink. */
-            window.herdrGround = {
+            window.innovGround = {
                 read: function () {
                     try {
                         return localStorage.getItem("starlight-theme") === "light" ? "paper" : "ink";
@@ -87,7 +87,7 @@
                     } catch (e) {}
                 },
             };
-            window.herdrGround.apply(window.herdrGround.read());
+            window.innovGround.apply(window.innovGround.read());
         </script>
         <link rel="stylesheet" href="/css/style.css?v=59" />
         <link rel="stylesheet" href="/css/site.css?v=64" />
@@ -96,17 +96,17 @@
     <div class="hd-frame">
 
         <nav class="hd-nav">
-            <a class="lock" href="/"><span class="ram"></span><b>herdr</b></a>
+            <a class="lock" href="/"><span class="ram"></span><b>innov</b></a>
             <div class="sp"></div>
             <a class="lnk" href="/docs/">Docs</a>
             <a class="lnk" href="/plugins/">Plugins</a>
             <a class="lnk" href="/blog/">Blog</a>
             <a class="lnk" href="/compare/">Compare</a>
-            <a class="ico wide" href="https://github.com/herdrdev/herdr" aria-label="Herdr on GitHub — star count">
+            <a class="ico wide" href="https://github.com/Duke0503/cli" aria-label="Innov on GitHub — star count">
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.64 7.64 0 0 1 8 3.87c.68 0 1.36.09 2 .26 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" /></svg>
                 <b data-stars><!--N_STARS--></b>
             </a>
-            <a class="ico" href="https://x.com/herdrdev" aria-label="Herdr on X">
+            <a class="ico" href="https://x.com/innovdev" aria-label="Innov on X">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117Z" /></svg>
             </a>
             <div class="mode">
@@ -124,7 +124,7 @@
             <a href="/plugins/">Plugins</a>
             <a href="/blog/">Blog</a>
             <a href="/compare/">Compare</a>
-            <a href="https://x.com/herdrdev">@herdrdev</a>
+            <a href="https://x.com/innovdev">@innovdev</a>
             <div class="sheet-ground">
                 <span>Ground</span>
                 <div class="mode">
@@ -139,27 +139,27 @@
             <div class="in">
                 <div class="hd-eyebrow"><s></s>the agent runtime</div>
                 <h1>Run them <em>anywhere.</em> Leave them running.</h1>
-                <p class="lede">Herdr is the runtime your coding agents live on — laptop, desktop, or a box you rent. It holds real terminals open so the work survives the lid closing, and <b>gets you back in from anything with a keyboard.</b></p>
+                <p class="lede">Innov is the runtime your coding agents live on — laptop, desktop, or a box you rent. It holds real terminals open so the work survives the lid closing, and <b>gets you back in from anything with a keyboard.</b></p>
                 <div class="go">
                     <div class="hd-cmd">
-                        <code id="install-cmd"><b>$</b>curl -fsSL https://herdr.dev/install.sh | sh</code>
+                        <code id="install-cmd"><b>$</b>curl -fsSL https://innov.dev/install.sh | sh</code>
                         <button type="button" id="copy-btn" aria-label="Copy install command">copy</button>
                     </div>
                 </div>
                 <div class="meta">macOS · Linux · Windows beta · Apache 2.0 &nbsp;—&nbsp; <a href="/docs/install/">windows, homebrew, nix and manual install →</a></div>
-                <div class="meta yc-meta"><a class="yc" href="/blog/herdr-is-joining-y-combinator/">backed by <img src="/assets/yc-logo.svg" alt="Y" width="13" height="13" /> Combinator</a></div>
+                <div class="meta yc-meta"><a class="yc" href="/blog/innov-is-joining-y-combinator/">backed by <img src="/assets/yc-logo.svg" alt="Y" width="13" height="13" /> Combinator</a></div>
             </div>
         </header>
 
         <div class="strip">
-            <a class="stat" href="https://github.com/herdrdev/herdr" data-count>
+            <a class="stat" href="https://github.com/Duke0503/cli" data-count>
                 <b id="n-stars"><!--N_STARS--></b>
                 <span>
                     <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z"/></svg>
                     github stars <i class="live"></i>
                 </span>
             </a>
-            <a class="stat" href="https://github.com/herdrdev/herdr/releases" data-count>
+            <a class="stat" href="https://github.com/Duke0503/cli/releases" data-count>
                 <b id="n-installs"><!--N_INSTALLS--></b>
                 <span>
                     <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v10m0 0l-4-4m4 4l4-4M4 17v3h16v-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg>
@@ -190,17 +190,17 @@
         <div class="plate">
                 <figure class="hero-product-shot">
                     <div
-                        class="herdr-ui-mock"
+                        class="innov-ui-mock"
                         id="herd-mock"
                         role="img"
-                        aria-label="Interactive Herdr session mock with workspaces, tabs, agent states, and terminal panes running Claude Code and Codex"
+                        aria-label="Interactive Innov session mock with workspaces, tabs, agent states, and terminal panes running Claude Code and Codex"
                     >
                         <aside class="mock-sidebar">
                             <div class="mock-sidebar-half">
                             <div class="mock-sidebar-title">spaces</div>
-                            <div class="mock-space active" data-ws="herdr">
+                            <div class="mock-space active" data-ws="innov">
                                 <span class="mock-dot dot-working"></span>
-                                <div><strong>herdr</strong><small>master</small></div>
+                                <div><strong>innov</strong><small>master</small></div>
                             </div>
                             <div class="mock-space" data-ws="web-dashboard">
                                 <span class="mock-dot dot-blocked"></span>
@@ -213,16 +213,16 @@
                             </div>
                             <div class="mock-sidebar-half mock-sidebar-agents">
                             <div class="mock-agent-title"><span>agents</span><span>grouped</span></div>
-                            <div class="mock-agent working active" data-agent="herdr" data-kind="claude" data-ws-link="herdr" data-tab-link="main"><span>●</span><div><strong>herdr</strong><small>working · claude</small></div></div>
-                            <div class="mock-agent" data-agent="explore" data-kind="opencode" data-ws-link="herdr" data-tab-link="opencode"><span>○</span><div><strong>explore</strong><small>idle · opencode</small></div></div>
+                            <div class="mock-agent working active" data-agent="innov" data-kind="claude" data-ws-link="innov" data-tab-link="main"><span>●</span><div><strong>innov</strong><small>working · claude</small></div></div>
+                            <div class="mock-agent" data-agent="explore" data-kind="opencode" data-ws-link="innov" data-tab-link="opencode"><span>○</span><div><strong>explore</strong><small>idle · opencode</small></div></div>
                             <div class="mock-agent blocked" data-agent="web-dashboard" data-kind="claude" data-ws-link="web-dashboard" data-tab-link="main"><span>◉</span><div><strong>web-dashboard</strong><small>blocked · claude</small></div></div>
                             <div class="mock-agent done" data-agent="data-pipeline" data-kind="codex" data-ws-link="data-pipeline" data-tab-link="main"><span>●</span><div><strong>data-pipeline</strong><small>done · codex</small></div></div>
                             </div>
                         </aside>
                         <section class="mock-main">
-                            <div class="mock-view active" data-view="herdr">
+                            <div class="mock-view active" data-view="innov">
                                 <div class="mock-tabs">
-                                    <span data-tab="opencode">opencode</span><span class="active" data-tab="main">herdr</span><span>+</span>
+                                    <span data-tab="opencode">opencode</span><span class="active" data-tab="main">innov</span><span>+</span>
                                 </div>
                                 <div class="mock-panes active" data-tab="main">
                                     <div class="mock-pane focused tui" data-title="claude">
@@ -233,11 +233,11 @@
                                             <div class="cc-header-text">
                                                 <div><b>Claude Code</b> <span class="dim">v2.1.198</span></div>
                                                 <div class="dim">Fable 5 with high effort · Claude Max</div>
-                                                <div class="dim">~/Projects/herdr/website</div>
+                                                <div class="dim">~/Projects/innov/website</div>
                                             </div>
                                         </div>
                                         <br />
-                                        <div><b>❯</b> make the herdr.dev hero mock look exactly like real claude code</div>
+                                        <div><b>❯</b> make the innov.dev hero mock look exactly like real claude code</div>
                                         <br />
                                         <div><span class="cc-bullet">●</span> Ha. I read the real pane over the socket — the mock was on v2.1.168, Claude Code is <span class="cc-file">v2.1.198</span> now. Missing the logo block and the whole rate-limit row.</div>
                                         <br />
@@ -252,12 +252,12 @@
                                             <div class="cc-rule"></div>
                                             <div><b>❯</b> <span class="cursor"></span></div>
                                             <div class="cc-rule"></div>
-                                            <div class="cc-status">&nbsp;&nbsp;<span class="cc-cyan">~/Projects/herdr/website</span><span class="cc-gy"> &gt; </span><span class="cc-yellow">master *</span><span class="green"> ↑1</span><span class="cc-gy"> &gt; ctx ──────── </span><span class="green">3%</span><span class="cc-gy"> 31k/1M</span></div>
+                                            <div class="cc-status">&nbsp;&nbsp;<span class="cc-cyan">~/Projects/innov/website</span><span class="cc-gy"> &gt; </span><span class="cc-yellow">master *</span><span class="green"> ↑1</span><span class="cc-gy"> &gt; ctx ──────── </span><span class="green">3%</span><span class="cc-gy"> 31k/1M</span></div>
                                             <div class="cc-status">&nbsp;&nbsp;<span class="cc-coral">⏵⏵ bypass permissions on</span> <span class="dim">(shift+tab to cycle)</span></div>
                                         </div>
                                     </div>
                                     <div class="mock-pane" data-title="bun">
-                                        <div class="mock-prompt"><span>~/Projects/herdr</span> <em>master</em></div>
+                                        <div class="mock-prompt"><span>~/Projects/innov</span> <em>master</em></div>
                                         <div><b>❯</b> <span class="cmd">bun</span> run dev</div>
                                         <div class="dim">$ node scripts/prepare-docs.mjs && astro dev</div>
                                         <div><span class="time">02:10:44</span> <span class="blue">[types]</span> Generated 0ms</div>
@@ -279,7 +279,7 @@
                                         <br />
                                         <div class="oc-y">+ Thought: 292ms</div>
                                         <br />
-                                        <div>This is <span class="oc-y">src/main.rs</span> — the entry point for <b>herdr</b>. Here's what it does:</div>
+                                        <div>This is <span class="oc-y">src/main.rs</span> — the entry point for <b>innov</b>. Here's what it does:</div>
                                         <br />
                                         <div><span class="blue">1.</span> Arg parsing — <span class="oc-y">session::configure_from_args</span>, then remote args for the SSH bridge.</div>
                                         <div><span class="blue">2.</span> Subcommand dispatch — <span class="oc-y">server</span>, <span class="oc-y">client</span>, <span class="oc-y">update</span> — each returns early.</div>
@@ -401,10 +401,10 @@
                 <div class="n"><span>01</span></div>
                 <div class="cap-in">
                     <h3>Always running.&nbsp;<b class="arw">&#8594;</b></h3>
-                    <p>Herdr isn't an app you keep open. It's a server running in the background, and the terminals live inside it. Close the lid or drop the network and the agents keep working; restart the machine and Herdr brings the layout back and resumes their sessions.</p>
+                    <p>Innov isn't an app you keep open. It's a server running in the background, and the terminals live inside it. Close the lid or drop the network and the agents keep working; restart the machine and Innov brings the layout back and resumes their sessions.</p>
                 </div>
                 <div class="ev" aria-hidden="true">
-                    <div class="ev-row"><span>herdr-server</span><b><i class="beat"></i>up</b></div>
+                    <div class="ev-row"><span>innov-server</span><b><i class="beat"></i>up</b></div>
                     <div class="ev-note">3 workspaces &middot; 4 agents &middot; nobody attached</div>
                 </div>
             </a>
@@ -412,11 +412,11 @@
                 <div class="n"><span>02</span></div>
                 <div class="cap-in">
                     <h3>You never hunt for the stuck one.&nbsp;<b class="arw">&#8594;</b></h3>
-                    <p>Herdr reads every pane and marks each agent working, blocked or idle. When one stops and needs an answer it says so, so you don't go pane by pane looking for whoever is waiting on you.</p>
+                    <p>Innov reads every pane and marks each agent working, blocked or idle. When one stops and needs an answer it says so, so you don't go pane by pane looking for whoever is waiting on you.</p>
                 </div>
                 <div class="ev" aria-hidden="true">
                     <div class="ev-row"><span>web-dashboard</span><b><i class="b"></i>blocked</b></div>
-                    <div class="ev-row"><span>herdr</span><b><i class="w"></i>working</b></div>
+                    <div class="ev-row"><span>innov</span><b><i class="w"></i>working</b></div>
                     <div class="ev-row"><span>data-pipeline</span><b><i class="i"></i>idle</b></div>
                 </div>
             </a>
@@ -434,7 +434,7 @@
                 <div class="n"><span>04</span></div>
                 <div class="cap-in">
                     <h3>Runs what you already run.&nbsp;<b class="arw">&#8594;</b></h3>
-                    <p>Claude Code, Codex, Cursor, opencode, Grok and the rest. Herdr doesn't wrap them or replace them, it just owns their terminals — one binary, macOS and Linux, Windows in beta.</p>
+                    <p>Claude Code, Codex, Cursor, opencode, Grok and the rest. Innov doesn't wrap them or replace them, it just owns their terminals — one binary, macOS and Linux, Windows in beta.</p>
                 </div>
                 <div class="ev">
                     <div class="herd">
@@ -450,12 +450,12 @@
                     <div class="ev-note"><!--AGENTS_NOTE--></div>
                 </div>
             </a>
-            <a class="cap cap-soon" href="/blog/herdr-is-joining-y-combinator/#where-were-going">
+            <a class="cap cap-soon" href="/blog/innov-is-joining-y-combinator/#where-were-going">
                 <div class="n"><span>05</span><span class="soon-tag">soon</span></div>
                 <div class="cap-in">
                     <h3>Where do agents run while you sleep?&nbsp;<b class="arw">&#8594;</b></h3>
                     <p aria-hidden="true"><span class="mask">████ █████████ █████████ ████ █ ████████ ████ ███ ██ ██ ██████ ███ ███ ██████ █████ █████ █████</span></p>
-                    <p class="sr">The answer is redacted for now. Read where Herdr is going in the Y Combinator announcement.</p>
+                    <p class="sr">The answer is redacted for now. Read where Innov is going in the Y Combinator announcement.</p>
                 </div>
                 <div class="ev">
                     <div class="tape" aria-hidden="true"><b>$</b><span class="mask">█████ █████ █████</span></div>
@@ -471,11 +471,11 @@
                 <p>One command, and nothing else about your setup changes — the agent CLIs you already run keep working exactly as they did, except now they don't stop when you do.</p>
                 <div class="go">
                     <div class="hd-cmd">
-                        <code id="install-cmd-2"><b>$</b>curl -fsSL https://herdr.dev/install.sh | sh</code>
+                        <code id="install-cmd-2"><b>$</b>curl -fsSL https://innov.dev/install.sh | sh</code>
                         <button type="button" id="copy-btn-2" aria-label="Copy install command">copy</button>
                     </div>
                 </div>
-                <div class="meta">Windows beta: <code>irm https://herdr.dev/install.ps1 | iex</code> &nbsp;—&nbsp; <a href="/docs/">all install methods →</a></div>
+                <div class="meta">Windows beta: <code>irm https://innov.dev/install.ps1 | iex</code> &nbsp;—&nbsp; <a href="/docs/">all install methods →</a></div>
             </div>
         </section>
 
@@ -485,16 +485,16 @@
             <a href="/plugins/">plugins</a>
             <a href="/blog/">blog</a>
             <a href="/compare/">compare</a>
-            <span>built in the terminal · © 2026 Herdr, Inc.</span>
+            <span>built in the terminal · © 2026 Innov, Inc.</span>
             <span class="fact"><!--FACTS--></span>
             <span class="out">
-                <a class="ico" href="https://github.com/herdrdev/herdr" aria-label="Herdr on GitHub">
+                <a class="ico" href="https://github.com/Duke0503/cli" aria-label="Innov on GitHub">
                     <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.64 7.64 0 0 1 8 3.87c.68 0 1.36.09 2 .26 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" /></svg>
                 </a>
-                <a class="ico" href="https://x.com/herdrdev" aria-label="Herdr on X">
+                <a class="ico" href="https://x.com/innovdev" aria-label="Innov on X">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117Z" /></svg>
                 </a>
-                <a href="mailto:hey@herdr.dev">hey@herdr.dev</a>
+                <a href="mailto:hey@innov.dev">hey@innov.dev</a>
             </span>
         </footer>
 
@@ -505,18 +505,18 @@
         (function () {
             var buttons = document.querySelectorAll("[data-ground]");
             function paint(mode) {
-                window.herdrGround.apply(mode);
+                window.innovGround.apply(mode);
                 buttons.forEach(function (b) {
                     b.setAttribute("aria-pressed", String(b.dataset.ground === mode));
                 });
             }
             buttons.forEach(function (b) {
                 b.addEventListener("click", function () {
-                    window.herdrGround.save(b.dataset.ground);
+                    window.innovGround.save(b.dataset.ground);
                     paint(b.dataset.ground);
                 });
             });
-            paint(window.herdrGround.read());
+            paint(window.innovGround.read());
         })();
 
         /* nav sheet — the links, the account and the ground toggle that don't
@@ -553,12 +553,12 @@
             if (!out) return;
 
             var LINES = [
-                "herdr pane split --current --direction right --no-focus",
-                "herdr agent start reviewer --kind codex",
-                'herdr agent prompt reviewer "Review the current diff" --wait',
-                "herdr agent wait reviewer --until blocked",
-                "herdr agent read reviewer --source recent-unwrapped",
-                'herdr pane wait-output w1:p3 --regex "passed|failed"',
+                "innov pane split --current --direction right --no-focus",
+                "innov agent start reviewer --kind codex",
+                'innov agent prompt reviewer "Review the current diff" --wait',
+                "innov agent wait reviewer --until blocked",
+                "innov agent read reviewer --source recent-unwrapped",
+                'innov pane wait-output w1:p3 --regex "passed|failed"',
             ];
 
             if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -661,7 +661,7 @@
                 });
             }
 
-            fetch("https://assets.herdr.dev/stats/stats.json", { headers: { accept: "application/json" } })
+            fetch("https://assets.innov.dev/stats/stats.json", { headers: { accept: "application/json" } })
                 .then(function (r) { return r.ok ? r.json() : null; })
                 .then(function (d) {
                     if (!d) return;
@@ -680,7 +680,7 @@
                 })
                 .catch(function () {});
 
-            fetch("https://assets.herdr.dev/plugins/index.json", { headers: { accept: "application/json" } })
+            fetch("https://assets.innov.dev/plugins/index.json", { headers: { accept: "application/json" } })
                 .then(function (r) { return r.ok ? r.json() : null; })
                 .then(function (d) {
                     if (!d) return;

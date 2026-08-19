@@ -27,8 +27,8 @@ async function snapshot(url: string): Promise<any | null> {
 
 async function load(): Promise<SiteStats> {
   const [stats, plugins] = await Promise.all([
-    snapshot('https://assets.herdr.dev/stats/stats.json'),
-    snapshot('https://assets.herdr.dev/plugins/index.json'),
+    snapshot('https://assets.innov.dev/stats/stats.json'),
+    snapshot('https://assets.innov.dev/plugins/index.json'),
   ]);
 
   return {
@@ -68,7 +68,7 @@ export function releaseVersion(): Promise<string | null> {
   return versionPromise;
 }
 
-/* How many agents Herdr detects out of the box, counted from the bundled
+/* How many agents Innov detects out of the box, counted from the bundled
    manifests. The site is built from the same repo as the binary, so the number
    tracks the code and cannot drift the way a written-down one would — add a
    manifest and the homepage says so on the next deploy. */

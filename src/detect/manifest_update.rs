@@ -13,8 +13,9 @@ use serde::{Deserialize, Serialize};
 use super::{agent_label, parse_agent_label, Agent};
 
 pub(crate) const MANIFEST_ENGINE_VERSION: u32 = 3;
-const DEFAULT_CATALOG_URL: &str = "https://herdr.dev/agent-detection/index.toml";
-const CATALOG_URL_ENV: &str = "HERDR_AGENT_DETECTION_MANIFEST_CATALOG_URL";
+const DEFAULT_CATALOG_URL: &str = "https://innov.dev/agent-detection/index.toml";
+const CATALOG_URL_ENV: &str = "INNOV_AGENT_DETECTION_MANIFEST_CATALOG_URL";
+const LEGACY_CATALOG_URL_ENV: &str = "HERDR_AGENT_DETECTION_MANIFEST_CATALOG_URL";
 const MAX_FETCH_BYTES: usize = 256 * 1024;
 
 #[derive(Debug, Clone)]
@@ -462,6 +463,7 @@ fn state_root() -> PathBuf {
 
 fn catalog_url() -> String {
     std::env::var(CATALOG_URL_ENV)
+        .or_else(|_| std::env::var(LEGACY_CATALOG_URL_ENV))
         .ok()
         .map(|value| value.trim().to_string())
         .filter(|value| !value.is_empty())
@@ -570,7 +572,7 @@ contains = ["{contains}"]
         let old_config = std::env::var_os("XDG_CONFIG_HOME");
         let old_state = std::env::var_os("XDG_STATE_HOME");
         let dir = std::env::temp_dir().join(format!(
-            "herdr-manifest-update-{name}-{}",
+            "innov-manifest-update-{name}-{}",
             std::process::id()
         ));
         let config_dir = dir.join("config");
@@ -636,7 +638,7 @@ contains = ["{contains}"]
         with_state_dir("auto-update-reloads-cache", || {
             let old_catalog_url = std::env::var_os(CATALOG_URL_ENV);
             let web_dir = std::env::temp_dir()
-                .join(format!("herdr-manifest-update-web-{}", std::process::id()));
+                .join(format!("innov-manifest-update-web-{}", std::process::id()));
             let _ = fs::remove_dir_all(&web_dir);
             fs::create_dir_all(&web_dir).unwrap();
             fs::write(

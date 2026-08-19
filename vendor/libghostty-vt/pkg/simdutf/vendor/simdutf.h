@@ -965,7 +965,7 @@ enum {
 #endif
 /* begin file include/simdutf/internal/isadetection.h */
 /* From
-https://github.com/endorno/pytorch/blob/master/torch/lib/TH/generic/simd/simd.h
+https://github.com/endorno/pytorch/blob/main/torch/lib/TH/generic/simd/simd.h
 Highly modified.
 
 Copyright (c) 2016-     Facebook, Inc            (Adam Paszke)

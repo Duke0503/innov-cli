@@ -15,9 +15,10 @@ use std::time::{Duration, Instant};
 
 use tracing::warn;
 
-const DISABLE_SOUND_ENV: &str = "HERDR_DISABLE_SOUND";
+const DISABLE_SOUND_ENV: &str = "INNOV_DISABLE_SOUND";
+const LEGACY_DISABLE_SOUND_ENV: &str = "HERDR_DISABLE_SOUND";
 #[cfg(any(windows, test))]
-const WINDOWS_SOUND_PATH_ENV: &str = "HERDR_SOUND_PATH";
+const WINDOWS_SOUND_PATH_ENV: &str = "INNOV_SOUND_PATH";
 #[cfg(not(any(windows, target_os = "macos")))]
 const AUDIO_PLAYER_TIMEOUT: Duration = Duration::from_secs(15);
 #[cfg(not(any(windows, target_os = "macos")))]
@@ -66,7 +67,9 @@ pub fn play(sound: Sound, config: &crate::config::SoundConfig) {
 }
 
 fn sound_playback_disabled_by_env() -> bool {
-    std::env::var_os(DISABLE_SOUND_ENV).is_some() || std::env::var_os("NEXTEST").is_some()
+    std::env::var_os(DISABLE_SOUND_ENV).is_some()
+        || std::env::var_os(LEGACY_DISABLE_SOUND_ENV).is_some()
+        || std::env::var_os("NEXTEST").is_some()
 }
 
 fn play_file(path: &Path) -> Result<(), String> {
@@ -107,7 +110,7 @@ fn playback_error(output: &Output) -> String {
 
 fn temp_sound_path() -> PathBuf {
     let id = SOUND_TMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    std::env::temp_dir().join(format!("herdr-sound-{}-{id}.mp3", std::process::id()))
+    std::env::temp_dir().join(format!("innov-sound-{}-{id}.mp3", std::process::id()))
 }
 
 #[cfg(windows)]
@@ -132,8 +135,11 @@ fn run_player(path: &Path) -> Result<Output, String> {
 fn windows_media_player_script() -> &'static str {
     r#"
 $ErrorActionPreference = 'Stop'
-$Path = [Environment]::GetEnvironmentVariable('HERDR_SOUND_PATH', 'Process')
-if ([string]::IsNullOrWhiteSpace($Path)) { throw 'HERDR_SOUND_PATH is not set' }
+$Path = [Environment]::GetEnvironmentVariable('INNOV_SOUND_PATH', 'Process')
+if ([string]::IsNullOrWhiteSpace($Path)) {
+    $Path = [Environment]::GetEnvironmentVariable('HERDR_SOUND_PATH', 'Process')
+}
+if ([string]::IsNullOrWhiteSpace($Path)) { throw 'INNOV_SOUND_PATH is not set' }
 Add-Type -AssemblyName PresentationCore
 Add-Type -AssemblyName WindowsBase
 $resolved = (Resolve-Path -LiteralPath $Path).ProviderPath
@@ -382,7 +388,7 @@ mod tests {
             args: &[
                 "-c",
                 "printf '%s' \"$$\" > \"$1\"; exec sleep 2",
-                "herdr-sound-timeout-test",
+                "innov-sound-timeout-test",
             ],
         };
         let result = player.output_with_timeout(&pid_path, Duration::from_millis(100));
@@ -411,7 +417,7 @@ mod tests {
             args: &[
                 "-c",
                 "i=0; while [ \"$i\" -lt 8192 ]; do printf 0123456789abcdef; i=$((i + 1)); done; i=0; while [ \"$i\" -lt 8192 ]; do printf fedcba9876543210; i=$((i + 1)); done >&2; exit 7",
-                "herdr-sound-output-test",
+                "innov-sound-output-test",
             ],
         };
 
@@ -437,6 +443,7 @@ mod tests {
                 .flatten()
         });
 
+        assert!(script.contains("GetEnvironmentVariable('INNOV_SOUND_PATH', 'Process')"));
         assert!(script.contains("GetEnvironmentVariable('HERDR_SOUND_PATH', 'Process')"));
         assert!(!script.contains("param([string]$Path)"));
         assert!(script.contains("Resolve-Path -LiteralPath $Path"));

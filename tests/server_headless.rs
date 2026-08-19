@@ -13,8 +13,8 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use portable_pty::{native_pty_system, Child, CommandBuilder, MasterPty, PtySize};
 use support::{
-    cleanup_test_base, register_runtime_dir, register_spawned_herdr_pid,
-    unregister_spawned_herdr_pid, CURRENT_PROTOCOL,
+    cleanup_test_base, register_runtime_dir, register_spawned_innov_pid,
+    unregister_spawned_innov_pid, CURRENT_PROTOCOL,
 };
 
 fn unique_test_dir() -> PathBuf {
@@ -23,23 +23,23 @@ fn unique_test_dir() -> PathBuf {
         .map(|d| d.as_nanos())
         .unwrap_or(0);
     PathBuf::from(format!(
-        "/tmp/herdr-server-test-{}-{nanos}",
+        "/tmp/innov-server-test-{}-{nanos}",
         std::process::id()
     ))
 }
 
-struct SpawnedHerdr {
+struct SpawnedInnov {
     _master: Option<Box<dyn MasterPty + Send>>,
     child: Box<dyn Child + Send + Sync>,
 }
 
-impl SpawnedHerdr {
+impl SpawnedInnov {
     fn close_master(&mut self) {
         drop(self._master.take());
     }
 }
 
-impl Drop for SpawnedHerdr {
+impl Drop for SpawnedInnov {
     fn drop(&mut self) {
         let pid = self.child.process_id();
         let _ = self.child.kill();
@@ -57,12 +57,12 @@ impl Drop for SpawnedHerdr {
                 thread::sleep(Duration::from_millis(20));
             }
 
-            unregister_spawned_herdr_pid(Some(pid));
+            unregister_spawned_innov_pid(Some(pid));
         }
     }
 }
 
-fn cleanup_spawned_herdr(spawned: SpawnedHerdr, base: PathBuf) {
+fn cleanup_spawned_innov(spawned: SpawnedInnov, base: PathBuf) {
     drop(spawned);
     cleanup_test_base(&base);
 }
@@ -101,7 +101,7 @@ fn spawn_server(
     runtime_dir: &Path,
     api_socket_path: &Path,
     _client_socket_path: &Path,
-) -> SpawnedHerdr {
+) -> SpawnedInnov {
     fs::create_dir_all(config_home.join("cli")).unwrap();
     fs::create_dir_all(runtime_dir).unwrap();
     register_runtime_dir(runtime_dir);
@@ -116,20 +116,20 @@ fn spawn_server(
         })
         .unwrap();
 
-    let mut cmd = CommandBuilder::new(env!("CARGO_BIN_EXE_cli"));
+    let mut cmd = CommandBuilder::new(env!("CARGO_BIN_EXE_innov"));
     cmd.arg("server");
     cmd.env("XDG_CONFIG_HOME", config_home);
     cmd.env("XDG_RUNTIME_DIR", runtime_dir);
-    cmd.env("HERDR_SOCKET_PATH", api_socket_path);
-    cmd.env_remove("HERDR_CLIENT_SOCKET_PATH");
+    cmd.env("INNOV_SOCKET_PATH", api_socket_path);
+    cmd.env_remove("INNOV_CLIENT_SOCKET_PATH");
     cmd.env("SHELL", "/bin/sh");
-    cmd.env_remove("HERDR_ENV");
+    cmd.env_remove("INNOV_ENV");
 
     let child = pair.slave.spawn_command(cmd).unwrap();
-    register_spawned_herdr_pid(child.process_id());
+    register_spawned_innov_pid(child.process_id());
     drop(pair.slave);
 
-    SpawnedHerdr {
+    SpawnedInnov {
         _master: Some(pair.master),
         child,
     }
@@ -358,8 +358,8 @@ fn server_creates_both_sockets() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let spawned = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
 
@@ -382,7 +382,7 @@ fn server_creates_both_sockets() {
         "ping should return pong: {response}"
     );
 
-    cleanup_spawned_herdr(spawned, base);
+    cleanup_spawned_innov(spawned, base);
 }
 
 #[test]
@@ -391,8 +391,8 @@ fn server_starts_without_terminal() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let spawned = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
 
@@ -405,7 +405,7 @@ fn server_starts_without_terminal() {
         assert_eq!(result, 0, "server process should be running");
     }
 
-    cleanup_spawned_herdr(spawned, base);
+    cleanup_spawned_innov(spawned, base);
 }
 
 #[test]
@@ -414,8 +414,8 @@ fn server_api_responds_to_ping() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let spawned = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
     wait_for_socket(&api_socket, Duration::from_secs(10));
@@ -427,7 +427,7 @@ fn server_api_responds_to_ping() {
         "API should respond to ping: {response}"
     );
 
-    cleanup_spawned_herdr(spawned, base);
+    cleanup_spawned_innov(spawned, base);
 }
 
 #[test]
@@ -436,8 +436,8 @@ fn server_removes_client_socket_on_exit() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let mut spawned = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
     wait_for_socket(&api_socket, Duration::from_secs(10));
@@ -470,8 +470,8 @@ fn server_cleans_up_stale_client_socket() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     // Create a stale client socket file (simulating a crashed server).
     fs::create_dir_all(&runtime_dir).unwrap();
@@ -492,7 +492,7 @@ fn server_cleans_up_stale_client_socket() {
         "API should respond to ping: {response}"
     );
 
-    cleanup_spawned_herdr(spawned, base);
+    cleanup_spawned_innov(spawned, base);
 }
 
 #[test]
@@ -501,8 +501,8 @@ fn server_persists_after_client_disconnect() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let spawned = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
     wait_for_socket(&api_socket, Duration::from_secs(10));
@@ -524,7 +524,7 @@ fn server_persists_after_client_disconnect() {
         "API should still respond after client disconnect: {response}"
     );
 
-    cleanup_spawned_herdr(spawned, base);
+    cleanup_spawned_innov(spawned, base);
 }
 
 #[test]
@@ -533,8 +533,8 @@ fn duplicate_server_start_fails_gracefully() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     // Start the first server.
     let spawned1 = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
@@ -550,27 +550,27 @@ fn duplicate_server_start_fails_gracefully() {
         })
         .unwrap();
 
-    let mut cmd = CommandBuilder::new(env!("CARGO_BIN_EXE_cli"));
+    let mut cmd = CommandBuilder::new(env!("CARGO_BIN_EXE_innov"));
     cmd.arg("server");
     cmd.env("XDG_CONFIG_HOME", &config_home);
     cmd.env("XDG_RUNTIME_DIR", &runtime_dir);
-    cmd.env("HERDR_SOCKET_PATH", &api_socket);
-    cmd.env_remove("HERDR_CLIENT_SOCKET_PATH");
+    cmd.env("INNOV_SOCKET_PATH", &api_socket);
+    cmd.env_remove("INNOV_CLIENT_SOCKET_PATH");
     cmd.env("SHELL", "/bin/sh");
-    cmd.env_remove("HERDR_ENV");
+    cmd.env_remove("INNOV_ENV");
 
     let mut child2 = pair.slave.spawn_command(cmd).unwrap();
-    register_spawned_herdr_pid(child2.process_id());
+    register_spawned_innov_pid(child2.process_id());
     drop(pair.slave);
 
     // Wait for the second server to exit.
     let exit_status = child2.wait().unwrap();
-    unregister_spawned_herdr_pid(child2.process_id());
+    unregister_spawned_innov_pid(child2.process_id());
 
     // The second server should exit with a non-zero code.
     assert!(!exit_status.success(), "duplicate server start should fail");
 
-    cleanup_spawned_herdr(spawned1, base);
+    cleanup_spawned_innov(spawned1, base);
 }
 
 #[test]
@@ -579,8 +579,8 @@ fn client_handshake_succeeds() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let spawned = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
     wait_for_socket(&api_socket, Duration::from_secs(10));
@@ -603,7 +603,7 @@ fn client_handshake_succeeds() {
         error
     );
 
-    cleanup_spawned_herdr(spawned, base);
+    cleanup_spawned_innov(spawned, base);
 }
 
 #[test]
@@ -612,8 +612,8 @@ fn client_handshake_rejects_incompatible_version() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let spawned = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
     wait_for_socket(&api_socket, Duration::from_secs(10));
@@ -634,7 +634,7 @@ fn client_handshake_rejects_incompatible_version() {
         "version 0 should be rejected with an error"
     );
 
-    cleanup_spawned_herdr(spawned, base);
+    cleanup_spawned_innov(spawned, base);
 }
 
 #[test]
@@ -643,8 +643,8 @@ fn client_handshake_clamps_small_terminal_size() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let spawned = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
     wait_for_socket(&api_socket, Duration::from_secs(10));
@@ -663,7 +663,7 @@ fn client_handshake_clamps_small_terminal_size() {
         error
     );
 
-    cleanup_spawned_herdr(spawned, base);
+    cleanup_spawned_innov(spawned, base);
 }
 
 #[test]
@@ -675,8 +675,8 @@ fn no_hello_client_closed_within_five_seconds() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let spawned = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
     wait_for_socket(&api_socket, Duration::from_secs(10));
@@ -728,5 +728,5 @@ fn no_hello_client_closed_within_five_seconds() {
         "server should still respond to ping: {response}"
     );
 
-    cleanup_spawned_herdr(spawned, base);
+    cleanup_spawned_innov(spawned, base);
 }

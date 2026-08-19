@@ -1,5 +1,5 @@
 {
-  description = "herdr — terminal workspace manager for AI coding agents";
+  description = "innov — terminal workspace manager for AI coding agents";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -54,27 +54,27 @@
         system:
         let
           pkgs = pkgsFor system;
-          herdr = pkgs.callPackage ./nix/package.nix {
+          innov = pkgs.callPackage ./nix/package.nix {
             rustPlatform = rustPlatformFor pkgs;
           };
         in
         {
-          inherit herdr;
-          default = herdr;
+          inherit innov;
+          default = innov;
         }
       );
 
       apps = forAllSystems (system: {
         default = {
           type = "app";
-          program = "${self.packages.${system}.default}/bin/herdr";
-          meta.description = "Run Herdr";
+          program = "${self.packages.${system}.default}/bin/innov";
+          meta.description = "Run Innov";
         };
       });
 
       checks = forAllSystems (system: {
-        herdr = self.packages.${system}.default;
-        default = self.checks.${system}.herdr;
+        innov = self.packages.${system}.default;
+        default = self.checks.${system}.innov;
       });
 
       devShells = forAllSystems (
@@ -85,7 +85,7 @@
         in
         {
           default = pkgs.mkShell {
-            name = "herdr-dev";
+            name = "innov-dev";
             packages = with pkgs; [
               cargo-nextest
               cmake
@@ -108,7 +108,7 @@
 
       overlays.default = lib.composeExtensions rust-overlay.overlays.default (
         final: _prev: {
-          herdr = final.callPackage ./nix/package.nix {
+          innov = final.callPackage ./nix/package.nix {
             rustPlatform = rustPlatformFor final;
           };
         }

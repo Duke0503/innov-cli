@@ -392,7 +392,7 @@ mod tests {
         shutdown_test_runtimes(&mut app);
 
         let focused_cwd = std::env::temp_dir().join(format!(
-            "herdr-ws-follow-{}-{}",
+            "innov-ws-follow-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -447,9 +447,9 @@ mod tests {
         app.state.workspaces = vec![Workspace::test_new("issue")];
         app.state.workspaces[0].worktree_space = Some(crate::workspace::WorktreeSpaceMembership {
             key: "repo-key".into(),
-            label: "herdr".into(),
-            repo_root: "/repo/herdr".into(),
-            checkout_path: "/repo/herdr-issue".into(),
+            label: "innov".into(),
+            repo_root: "/repo/innov".into(),
+            checkout_path: "/repo/innov-issue".into(),
             is_linked_worktree: true,
         });
         app

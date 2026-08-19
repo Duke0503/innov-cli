@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const websiteDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const distDir = resolve(websiteDir, 'dist');
-const nonCanonicalDocsUrl = /https:\/\/herdr\.dev\/(?:ja\/|zh-cn\/)?docs\/(?:preview|\d+\.\d+\.\d+)(?:\/|<)/;
+const nonCanonicalDocsUrl = /https:\/\/innov\.dev\/(?:ja\/|zh-cn\/)?docs\/(?:preview|\d+\.\d+\.\d+)(?:\/|<)/;
 const versions = JSON.parse(
   await readFile(resolve(websiteDir, 'src/data/docs-versions.json'), 'utf8'),
 );
@@ -47,7 +47,7 @@ if (versions.preview.commit !== 'master') {
 assertIncludes(preview, 'name="robots" content="noindex, nofollow"');
 assertIncludes(archived, `data-pagefind-filter="version[content]" content="${versions.current}"`);
 assertIncludes(archived, 'name="robots" content="noindex, nofollow"');
-if (archived.includes(`This page documents Herdr ${versions.current}`)) {
+if (archived.includes(`This page documents Innov ${versions.current}`)) {
   throw new Error('the current documentation version must not be labeled as outdated');
 }
 const versionSelect = stable.match(/<select[^>]*aria-label="Documentation version"[^>]*>([\s\S]*?)<\/select>/)?.[1];
@@ -62,11 +62,11 @@ if (previous) {
     resolve(distDir, 'docs', previous.version, 'index.html'),
     'utf8',
   );
-  assertIncludes(previousArchive, `This page documents Herdr ${previous.version}`);
+  assertIncludes(previousArchive, `This page documents Innov ${previous.version}`);
 }
 
 const sitemap = await readFile(resolve(distDir, 'sitemap-0.xml'), 'utf8');
-assertIncludes(sitemap, 'https://herdr.dev/docs/');
+assertIncludes(sitemap, 'https://innov.dev/docs/');
 if (nonCanonicalDocsUrl.test(sitemap)) {
   throw new Error('preview or versioned documentation URLs must not appear in the sitemap');
 }
@@ -80,10 +80,10 @@ const currentDocs = versions.versions.find((entry) => entry.version === versions
 if (!currentDocs?.tag || !currentDocs.source) {
   throw new Error(`current docs version ${versions.current} is missing its tag or source`);
 }
-const stableRawRoot = `https://raw.githubusercontent.com/herdrdev/herdr/${currentDocs.tag}`;
+const stableRawRoot = `https://raw.githubusercontent.com/Duke0503/cli/${currentDocs.tag}`;
 const stableRawBase = `${stableRawRoot}/${currentDocs.source}`;
 const stableConfigReferenceUrl = `${stableRawRoot}/${currentDocs.source.replace(/\/content\/docs$/, '/data/config-reference.json')}`;
-const previewRawRoot = `https://raw.githubusercontent.com/herdrdev/herdr/${versions.preview.commit}`;
+const previewRawRoot = `https://raw.githubusercontent.com/Duke0503/cli/${versions.preview.commit}`;
 const previewRawBase = `${previewRawRoot}/docs/next/website/src/content/docs`;
 const previewConfigReferenceUrl = `${previewRawRoot}/docs/next/website/src/data/config-reference.json`;
 assertIncludes(llmsIndex, `Current stable release: ${versions.current}.`);
@@ -94,17 +94,17 @@ assertIncludes(llmsIndex, "jq --arg key 'ui.sidebar_width'");
 if (llmsIndex.includes(`${stableRawBase}/config-reference.mdx`)) {
   throw new Error('llms.txt must link to config reference data instead of the unrendered MDX component');
 }
-assertIncludes(llmsIndex, 'https://herdr.dev/llms-small.txt');
-assertIncludes(llmsIndex, 'https://herdr.dev/llms-full.txt');
-assertIncludes(llmsIndex, 'https://herdr.dev/agent-guide.md');
-assertIncludes(llmsIndex, 'https://herdr.dev/llms-preview.txt');
+assertIncludes(llmsIndex, 'https://innov.dev/llms-small.txt');
+assertIncludes(llmsIndex, 'https://innov.dev/llms-full.txt');
+assertIncludes(llmsIndex, 'https://innov.dev/agent-guide.md');
+assertIncludes(llmsIndex, 'https://innov.dev/llms-preview.txt');
 assertIncludes(llmsPreview, `Active preview build: ${versions.preview.build_id}`);
 assertIncludes(llmsPreview, `${previewRawBase}/quick-start.mdx`);
 assertIncludes(llmsPreview, `- [Config reference](${previewConfigReferenceUrl})`);
 if (llmsPreview.includes(`${previewRawBase}/config-reference.mdx`)) {
   throw new Error('llms-preview.txt must link to config reference data instead of the unrendered MDX component');
 }
-assertIncludes(llmsPreview, 'https://herdr.dev/llms.txt');
+assertIncludes(llmsPreview, 'https://innov.dev/llms.txt');
 const stablePageLinks = llmsIndex
   .split('\n')
   .filter(
@@ -134,10 +134,10 @@ for (const [name, content] of [
   ['llms-small.txt', llmsSmall],
   ['llms-full.txt', llmsFull],
 ]) {
-  assertIncludes(content, '# Herdr documentation');
+  assertIncludes(content, '# Innov documentation');
   assertIncludes(content, '# Troubleshooting');
   assertIncludes(content, '# Socket API');
-  if (content.match(/^# Herdr documentation$/gm)?.length !== 1) {
+  if (content.match(/^# Innov documentation$/gm)?.length !== 1) {
     throw new Error(`${name} must contain exactly one stable documentation set`);
   }
   if (/\]\(\/docs\/(?:preview|\d+\.\d+\.\d+)(?:\/|\))/.test(content)) {

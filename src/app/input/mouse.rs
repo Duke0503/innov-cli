@@ -2431,8 +2431,8 @@ mod tests {
     fn mark_worktree_space_member(workspace: &mut Workspace, ws_idx: usize, key: &str) {
         workspace.worktree_space = Some(crate::workspace::WorktreeSpaceMembership {
             key: key.into(),
-            label: "herdr".into(),
-            repo_root: "/repo/herdr".into(),
+            label: "innov".into(),
+            repo_root: "/repo/innov".into(),
             checkout_path: format!("/repo/worktree-{ws_idx}").into(),
             is_linked_worktree: ws_idx != 0,
         });
@@ -2500,7 +2500,7 @@ mod tests {
         app.state.view.pane_infos = pane_infos;
         assert!(
             app.state.mouse_capture,
-            "reproduction must use the default Herdr mouse dispatcher"
+            "reproduction must use the default Innov mouse dispatcher"
         );
 
         let outer_column = info.inner_rect.x + 2;
@@ -2957,7 +2957,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn mouse_dispatcher_does_not_forward_motion_behind_herdr_modes() {
+    async fn mouse_dispatcher_does_not_forward_motion_behind_innov_modes() {
         let mut app = app_for_mouse_test();
         let mut ws = Workspace::test_new("test");
         let pane_id = ws.tabs[0].root_pane;
@@ -2988,7 +2988,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn unset_right_click_passthrough_keeps_modified_right_click_as_herdr_menu() {
+    async fn unset_right_click_passthrough_keeps_modified_right_click_as_innov_menu() {
         let mut app = app_for_mouse_test();
         let mut ws = Workspace::test_new("test");
         let pane_id = ws.tabs[0].root_pane;
@@ -3253,19 +3253,19 @@ mod tests {
         crate::app::state::WorktreeOpenState {
             source_workspace_id: "source".into(),
             source_existing_membership: None,
-            source_checkout_path: "/repo/herdr".into(),
-            source_repo_root: "/repo/herdr".into(),
+            source_checkout_path: "/repo/innov".into(),
+            source_repo_root: "/repo/innov".into(),
             repo_key: "repo-key".into(),
-            repo_name: "herdr".into(),
+            repo_name: "innov".into(),
             entries: vec![
                 crate::app::state::WorktreeOpenEntry {
-                    path: "/repo/herdr".into(),
+                    path: "/repo/innov".into(),
                     branch: Some("main".into()),
                     is_linked_worktree: false,
                     already_open_ws_idx: Some(0),
                 },
                 crate::app::state::WorktreeOpenEntry {
-                    path: "/repo/herdr-issue".into(),
+                    path: "/repo/innov-issue".into(),
                     branch: Some("worktree/issue".into()),
                     is_linked_worktree: true,
                     already_open_ws_idx: None,
@@ -3308,7 +3308,7 @@ mod tests {
         app.state.ensure_test_terminals();
         app.state.active = Some(0);
         app.state.selected = 0;
-        app.state.toast_config.delivery = crate::config::ToastDelivery::Herdr;
+        app.state.toast_config.delivery = crate::config::ToastDelivery::Innov;
         app.state.toast_config.delay_seconds = 0;
         let target_terminal_id = app.state.workspaces[1]
             .panes
@@ -3514,8 +3514,8 @@ mod tests {
         app.state.mode = Mode::ConfirmRemoveWorktree;
         app.state.worktree_remove = Some(crate::app::state::WorktreeRemoveState {
             workspace_id: "issue".into(),
-            repo_root: "/repo/herdr".into(),
-            path: "/repo/herdr-issue".into(),
+            repo_root: "/repo/innov".into(),
+            path: "/repo/innov-issue".into(),
             error: None,
             removing: false,
             force_confirmation: false,
@@ -3542,8 +3542,8 @@ mod tests {
         app.state.mode = Mode::ConfirmRemoveWorktree;
         app.state.worktree_remove = Some(crate::app::state::WorktreeRemoveState {
             workspace_id: "issue".into(),
-            repo_root: "/repo/herdr".into(),
-            path: "/repo/herdr-issue".into(),
+            repo_root: "/repo/innov".into(),
+            path: "/repo/innov-issue".into(),
             error: None,
             removing: false,
             force_confirmation: false,

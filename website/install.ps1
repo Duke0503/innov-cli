@@ -1,9 +1,9 @@
 [CmdletBinding()]
 param(
-    [string]$Channel = $env:HERDR_CHANNEL,
-    [string]$ManifestUrl = $env:HERDR_MANIFEST_URL,
-    [string]$InstallDir = $env:HERDR_INSTALL_DIR,
-    [string]$ExpectedBuildId = $env:HERDR_EXPECTED_BUILD_ID,
+    [string]$Channel = $env:INNOV_CHANNEL,
+    [string]$ManifestUrl = $env:INNOV_MANIFEST_URL,
+    [string]$InstallDir = $env:INNOV_INSTALL_DIR,
+    [string]$ExpectedBuildId = $env:INNOV_EXPECTED_BUILD_ID,
     [int]$Retain = 3,
     [string]$LocalPackagePath,
     [string]$LocalPackageFormat,
@@ -15,12 +15,17 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
+if ([string]::IsNullOrWhiteSpace($Channel)) { $Channel = $env:HERDR_CHANNEL }
+if ([string]::IsNullOrWhiteSpace($ManifestUrl)) { $ManifestUrl = $env:HERDR_MANIFEST_URL }
+if ([string]::IsNullOrWhiteSpace($InstallDir)) { $InstallDir = $env:HERDR_INSTALL_DIR }
+if ([string]::IsNullOrWhiteSpace($ExpectedBuildId)) { $ExpectedBuildId = $env:HERDR_EXPECTED_BUILD_ID }
+
 if ([string]::IsNullOrWhiteSpace($Channel)) {
     $Channel = "preview"
 }
 
 if ($Channel -notin @("stable", "preview")) {
-    Write-Error "Invalid Herdr channel '$Channel'. Use 'preview'."
+    Write-Error "Invalid Innov channel '$Channel'. Use 'preview'."
     exit 1
 }
 
@@ -36,7 +41,7 @@ if ($localPackageValueCount -notin @(0, 4)) {
 }
 $useLocalPackage = $localPackageValueCount -eq 4
 if ($useLocalPackage -and $LocalPackageFormat -notin @("zip", "exe")) {
-    throw "Local Herdr package has unsupported format '$LocalPackageFormat'."
+    throw "Local Innov package has unsupported format '$LocalPackageFormat'."
 }
 
 function Write-Step {
@@ -49,8 +54,8 @@ function Write-WarningStep {
     Write-Warning $Message
 }
 
-function Get-HerdrCommandSource {
-    $existing = Get-Command herdr -ErrorAction SilentlyContinue
+function Get-InnovCommandSource {
+    $existing = Get-Command innov -ErrorAction SilentlyContinue
     if ($null -eq $existing) {
         return $null
     }
@@ -136,8 +141,8 @@ function Update-PathRegistryEntry {
 }
 
 function Publish-EnvironmentChange {
-    if (-not ("HerdrInstaller.EnvironmentNativeMethods" -as [type])) {
-        Add-Type -Namespace HerdrInstaller -Name EnvironmentNativeMethods -MemberDefinition @'
+    if (-not ("InnovInstaller.EnvironmentNativeMethods" -as [type])) {
+        Add-Type -Namespace InnovInstaller -Name EnvironmentNativeMethods -MemberDefinition @'
 [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true, CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
 public static extern System.IntPtr SendMessageTimeout(
     System.IntPtr hWnd,
@@ -151,7 +156,7 @@ public static extern System.IntPtr SendMessageTimeout(
     }
 
     $result = [UIntPtr]::Zero
-    [HerdrInstaller.EnvironmentNativeMethods]::SendMessageTimeout(
+    [InnovInstaller.EnvironmentNativeMethods]::SendMessageTimeout(
         [IntPtr]0xffff,
         0x1a,
         [UIntPtr]::Zero,
@@ -256,7 +261,7 @@ function Test-FileDigest {
         $sha256.Dispose()
     }
     if ($actual -ne $ExpectedDigest.ToLowerInvariant()) {
-        throw "Downloaded Herdr checksum did not match. Expected $ExpectedDigest but got $actual."
+        throw "Downloaded Innov checksum did not match. Expected $ExpectedDigest but got $actual."
     }
 }
 
@@ -280,7 +285,7 @@ function Test-RegularDirectory {
     return -not ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)
 }
 
-function Test-HerdrReleaseComplete {
+function Test-InnovReleaseComplete {
     param(
         [string]$ReleaseDir,
         [string]$Format
@@ -289,8 +294,8 @@ function Test-HerdrReleaseComplete {
     if (-not (Test-RegularDirectory -Path $ReleaseDir)) {
         return $false
     }
-    $herdrExe = Join-Path $ReleaseDir "herdr.exe"
-    if (-not (Test-RegularFile -Path $herdrExe)) {
+    $innovExe = Join-Path $ReleaseDir "innov.exe"
+    if (-not (Test-RegularFile -Path $innovExe)) {
         return $false
     }
     if ($Format -eq "exe") {
@@ -303,7 +308,7 @@ function Test-HerdrReleaseComplete {
         -not (Test-RegularDirectory -Path (Join-Path $conptyRoot "arm64"))) {
         return $false
     }
-    $markerPath = Join-Path $conptyRoot "herdr-conpty.json"
+    $markerPath = Join-Path $conptyRoot "innov-conpty.json"
     $required = @(
         "conpty/conpty.dll",
         "conpty/x64/OpenConsole.exe",
@@ -355,7 +360,7 @@ function Test-HerdrReleaseComplete {
         $actualBundleFiles = @($bundleEntries | Where-Object { -not $_.PSIsContainer } | ForEach-Object {
             $_.FullName.Substring($releaseRoot.Length + 1).Replace('\', '/')
         })
-        $expectedBundleFiles = @($expectedConptyFiles) + "conpty/herdr-conpty.json"
+        $expectedBundleFiles = @($expectedConptyFiles) + "conpty/innov-conpty.json"
         if (@(Compare-Object $expectedBundleFiles $actualBundleFiles).Count -ne 0) {
             return $false
         }
@@ -450,7 +455,7 @@ function Set-ManagedJunction {
         [string]$LinkPath,
         [string]$TargetPath,
         [string]$ManagedTargetPrefix,
-        [bool]$AllowLegacyHerdrBinMigration = $false
+        [bool]$AllowLegacyInnovBinMigration = $false
     )
 
     if (Test-Path -LiteralPath $LinkPath) {
@@ -469,7 +474,7 @@ function Set-ManagedJunction {
             Remove-Item -LiteralPath $LinkPath -Recurse -Force
         } elseif ($item.PSIsContainer) {
             if ((Get-ChildItem -LiteralPath $LinkPath -Force | Select-Object -First 1) -ne $null) {
-                if (-not (Move-LegacyHerdrBinDirectory -Path $LinkPath -AllowMigration $AllowLegacyHerdrBinMigration)) {
+                if (-not (Move-LegacyInnovBinDirectory -Path $LinkPath -AllowMigration $AllowLegacyInnovBinMigration)) {
                     throw "Refusing to replace non-empty directory at $LinkPath with a junction."
                 }
             } else {
@@ -484,7 +489,7 @@ function Set-ManagedJunction {
     New-Item -ItemType Junction -Path $LinkPath -Target $TargetPath | Out-Null
 }
 
-function Move-LegacyHerdrBinDirectory {
+function Move-LegacyInnovBinDirectory {
     param(
         [string]$Path,
         [bool]$AllowMigration
@@ -499,13 +504,13 @@ function Move-LegacyHerdrBinDirectory {
         return $false
     }
 
-    if (($entries | Where-Object { $_.Name -ieq "herdr.exe" } | Select-Object -First 1) -eq $null) {
+    if (($entries | Where-Object { $_.Name -ieq "innov.exe" } | Select-Object -First 1) -eq $null) {
         return $false
     }
 
     $legacyPath = "$Path.legacy.$([System.Guid]::NewGuid().ToString("N"))"
     Move-Item -LiteralPath $Path -Destination $legacyPath
-    Write-Step "Moved legacy Herdr bin directory to $legacyPath."
+    Write-Step "Moved legacy Innov bin directory to $legacyPath."
     return $true
 }
 
@@ -550,7 +555,7 @@ function Remove-OldReleases {
     }
 }
 
-function Resolve-HerdrVersion {
+function Resolve-InnovVersion {
     param(
         [object]$Manifest,
         [string]$SelectedChannel
@@ -575,7 +580,7 @@ if ($env:OS -ne "Windows_NT") {
 }
 
 if (-not [Environment]::Is64BitOperatingSystem) {
-    Write-Error "Herdr requires 64-bit Windows."
+    Write-Error "Innov requires 64-bit Windows."
     exit 1
 }
 
@@ -603,24 +608,26 @@ switch ($architecture) {
 
 if (-not $useLocalPackage -and [string]::IsNullOrWhiteSpace($ManifestUrl)) {
     $ManifestUrl = if ($Channel -eq "preview") {
-        "https://herdr.dev/preview.json"
+        "https://innov.dev/preview.json"
     } else {
-        "https://herdr.dev/latest.json"
+        "https://innov.dev/latest.json"
     }
 }
 
-$herdrHome = if ([string]::IsNullOrWhiteSpace($env:HERDR_HOME)) {
-    Join-Path $env:USERPROFILE ".herdr"
+$innovHome = if (-not [string]::IsNullOrWhiteSpace($env:INNOV_HOME)) {
+    $env:INNOV_HOME
+} elseif ([string]::IsNullOrWhiteSpace($env:HERDR_HOME)) {
+    Join-Path $env:USERPROFILE ".innov"
 } else {
     $env:HERDR_HOME
 }
-$herdrHome = [System.IO.Path]::GetFullPath($herdrHome)
-$standaloneRoot = Join-Path $herdrHome "packages\standalone"
+$innovHome = [System.IO.Path]::GetFullPath($innovHome)
+$standaloneRoot = Join-Path $innovHome "packages\standalone"
 $releasesDir = Join-Path $standaloneRoot "releases"
 $currentDir = Join-Path $standaloneRoot "current"
 $lockPath = Join-Path $standaloneRoot "install.lock"
 
-$defaultVisibleBinDir = Join-Path $env:LOCALAPPDATA "Programs\Herdr\bin"
+$defaultVisibleBinDir = Join-Path $env:LOCALAPPDATA "Programs\Innov\bin"
 $visibleBinDir = if ([string]::IsNullOrWhiteSpace($InstallDir)) {
     $defaultVisibleBinDir
 } else {
@@ -636,10 +643,10 @@ try {
     $allowLegacyVisibleBinMigration = $false
 }
 
-$existingHerdr = Get-HerdrCommandSource
-if (-not [string]::IsNullOrWhiteSpace($existingHerdr) -and -not (Test-PathStartsWith -Path $existingHerdr -Prefix $visibleBinDir)) {
-    Write-Step "Detected existing Herdr command at $existingHerdr"
-    Write-WarningStep "PATH order decides which Herdr runs. This installer will put $visibleBinDir first for future and current PowerShell sessions."
+$existingInnov = Get-InnovCommandSource
+if (-not [string]::IsNullOrWhiteSpace($existingInnov) -and -not (Test-PathStartsWith -Path $existingInnov -Prefix $visibleBinDir)) {
+    Write-Step "Detected existing Innov command at $existingInnov"
+    Write-WarningStep "PATH order decides which Innov runs. This installer will put $visibleBinDir first for future and current PowerShell sessions."
 }
 
 if ($useLocalPackage) {
@@ -649,35 +656,35 @@ if ($useLocalPackage) {
         Format = $LocalPackageFormat
     }
 } else {
-    Write-Step "Fetching Herdr $Channel manifest"
+    Write-Step "Fetching Innov $Channel manifest"
     $manifest = ConvertTo-ManifestObject -Manifest (Invoke-RestMethod -Uri $ManifestUrl)
     if (-not [string]::IsNullOrWhiteSpace($ExpectedBuildId) -and [string]$manifest.build_id -ne $ExpectedBuildId) {
-        throw "Preview manifest changed while updating. Expected build $ExpectedBuildId but found $($manifest.build_id). Run herdr update again."
+        throw "Preview manifest changed while updating. Expected build $ExpectedBuildId but found $($manifest.build_id). Run innov update again."
     }
-    $versionIdentity = Resolve-HerdrVersion -Manifest $manifest -SelectedChannel $Channel
+    $versionIdentity = Resolve-InnovVersion -Manifest $manifest -SelectedChannel $Channel
     $asset = Get-ManifestAsset -Manifest $manifest -Target $target
 }
 $safeVersionIdentity = $versionIdentity -replace '[^0-9A-Za-z._-]', '-'
 $releaseName = "$safeVersionIdentity-$targetTriple"
 $releaseDir = Join-Path $releasesDir $releaseName
 
-Write-Step "Installing Herdr $versionIdentity for $targetTriple"
-$tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("herdr-install-" + [System.Guid]::NewGuid().ToString("N"))
+Write-Step "Installing Innov $versionIdentity for $targetTriple"
+$tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("innov-install-" + [System.Guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
 
 try {
     Invoke-WithInstallLock -LockPath $lockPath -Script {
         Remove-StaleInstallArtifacts -ReleasesDir $releasesDir
 
-        if (-not (Test-HerdrReleaseComplete -ReleaseDir $releaseDir -Format $asset.Format)) {
+        if (-not (Test-InnovReleaseComplete -ReleaseDir $releaseDir -Format $asset.Format)) {
             $downloadPath = if ($useLocalPackage) {
                 $LocalPackagePath
             } else {
-                Join-Path $tempDir "herdr-download.$($asset.Format)"
+                Join-Path $tempDir "innov-download.$($asset.Format)"
             }
             $stagingDir = Join-Path $releasesDir ".staging.$releaseName.$PID"
             if (-not $useLocalPackage) {
-                Write-Step "Downloading Herdr"
+                Write-Step "Downloading Innov"
                 Invoke-WebRequest -Uri $asset.Url -OutFile $downloadPath
             }
             Test-FileDigest -Path $downloadPath -ExpectedDigest $asset.Sha256
@@ -686,15 +693,15 @@ try {
                 Expand-Archive -LiteralPath $downloadPath -DestinationPath $stagingDir
             } else {
                 New-Item -ItemType Directory -Force -Path $stagingDir | Out-Null
-                Copy-Item -LiteralPath $downloadPath -Destination (Join-Path $stagingDir "herdr.exe")
+                Copy-Item -LiteralPath $downloadPath -Destination (Join-Path $stagingDir "innov.exe")
             }
-            if (-not (Test-HerdrReleaseComplete -ReleaseDir $stagingDir -Format $asset.Format)) {
-                throw "Downloaded Herdr package is incomplete or failed ConPTY verification."
+            if (-not (Test-InnovReleaseComplete -ReleaseDir $stagingDir -Format $asset.Format)) {
+                throw "Downloaded Innov package is incomplete or failed ConPTY verification."
             }
-            $stagedHerdr = Join-Path $stagingDir "herdr.exe"
-            & $stagedHerdr --version *> $null
+            $stagedInnov = Join-Path $stagingDir "innov.exe"
+            & $stagedInnov --version *> $null
             if ($LASTEXITCODE -ne 0) {
-                throw "Downloaded Herdr command failed verification: $stagedHerdr --version"
+                throw "Downloaded Innov command failed verification: $stagedInnov --version"
             }
             $backupDir = $null
             if (Test-Path -LiteralPath $releaseDir) {
@@ -707,7 +714,7 @@ try {
                 if ($null -ne $backupDir -and -not (Test-Path -LiteralPath $releaseDir)) {
                     [System.IO.Directory]::Move($backupDir, $releaseDir)
                 }
-                Write-WarningStep "Windows could not activate the downloaded release. Another process may have a package file open, such as antivirus or indexing. No incomplete release was activated. Run herdr update again."
+                Write-WarningStep "Windows could not activate the downloaded release. Another process may have a package file open, such as antivirus or indexing. No incomplete release was activated. Run innov update again."
                 throw
             }
             if ($null -ne $backupDir) {
@@ -715,16 +722,16 @@ try {
             }
         }
 
-        $releaseHerdr = Join-Path $releaseDir "herdr.exe"
-        & $releaseHerdr --version *> $null
+        $releaseInnov = Join-Path $releaseDir "innov.exe"
+        & $releaseInnov --version *> $null
         if ($LASTEXITCODE -ne 0) {
-            throw "Installed Herdr command failed verification: $releaseHerdr --version"
+            throw "Installed Innov command failed verification: $releaseInnov --version"
         }
         Get-ChildItem -LiteralPath $releasesDir -Force -Directory -Filter ".backup.$releaseName.*" -ErrorAction SilentlyContinue |
             Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 
         Set-ManagedJunction -LinkPath $currentDir -TargetPath $releaseDir -ManagedTargetPrefix $releasesDir
-        Set-ManagedJunction -LinkPath $visibleBinDir -TargetPath $releaseDir -ManagedTargetPrefix $standaloneRoot -AllowLegacyHerdrBinMigration $allowLegacyVisibleBinMigration
+        Set-ManagedJunction -LinkPath $visibleBinDir -TargetPath $releaseDir -ManagedTargetPrefix $standaloneRoot -AllowLegacyInnovBinMigration $allowLegacyVisibleBinMigration
 
         Remove-OldReleases -ReleasesDir $releasesDir -CurrentReleaseDir $releaseDir -Keep $Retain
     }
@@ -753,11 +760,11 @@ if ($newProcessPath -cne $env:Path) {
     $env:Path = $newProcessPath
 }
 
-$resolvedHerdr = Get-HerdrCommandSource
-if (-not (Test-PathStartsWith -Path $resolvedHerdr -Prefix $visibleBinDir)) {
-    Write-WarningStep "PowerShell still resolves herdr to $resolvedHerdr. Open a new PowerShell window or inspect PATH order manually."
+$resolvedInnov = Get-InnovCommandSource
+if (-not (Test-PathStartsWith -Path $resolvedInnov -Prefix $visibleBinDir)) {
+    Write-WarningStep "PowerShell still resolves innov to $resolvedInnov. Open a new PowerShell window or inspect PATH order manually."
 }
 
-Write-Step "Current PowerShell session: herdr"
-Write-Step "Future PowerShell windows: open a new PowerShell window and run: herdr"
-Write-Host "Herdr $versionIdentity installed successfully."
+Write-Step "Current PowerShell session: innov"
+Write-Step "Future PowerShell windows: open a new PowerShell window and run: innov"
+Write-Host "Innov $versionIdentity installed successfully."

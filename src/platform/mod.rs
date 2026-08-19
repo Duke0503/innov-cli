@@ -311,7 +311,10 @@ pub fn process_agent_hint(_pid: u32) -> Option<crate::detect::Agent> {
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 pub(crate) fn parse_agent_env_hint(environ: &[u8]) -> Option<crate::detect::Agent> {
     for record in environ.split(|&byte| byte == 0) {
-        let Some(value) = record.strip_prefix(b"HERDR_AGENT=") else {
+        let value = record
+            .strip_prefix(b"INNOV_AGENT=")
+            .or_else(|| record.strip_prefix(b"HERDR_AGENT="));
+        let Some(value) = value else {
             continue;
         };
         return crate::detect::parse_agent_label(std::str::from_utf8(value).ok()?);
@@ -422,12 +425,16 @@ mod tests {
     #[test]
     fn parse_agent_env_hint_accepts_known_agents() {
         assert_eq!(
-            parse_agent_env_hint(b"PATH=/bin\0HERDR_AGENT=claude\0TERM=xterm\0"),
+            parse_agent_env_hint(b"PATH=/bin\0INNOV_AGENT=claude\0TERM=xterm\0"),
             Some(crate::detect::Agent::Claude)
         );
         assert_eq!(
-            parse_agent_env_hint(b"HERDR_AGENT=codex"),
+            parse_agent_env_hint(b"INNOV_AGENT=codex"),
             Some(crate::detect::Agent::Codex)
+        );
+        assert_eq!(
+            parse_agent_env_hint(b"HERDR_AGENT=claude"),
+            Some(crate::detect::Agent::Claude)
         );
     }
 
@@ -435,7 +442,7 @@ mod tests {
     #[test]
     fn parse_agent_env_hint_ignores_missing_or_unknown_agents() {
         assert_eq!(parse_agent_env_hint(b"PATH=/bin\0TERM=xterm\0"), None);
-        assert_eq!(parse_agent_env_hint(b"HERDR_AGENT=not-an-agent\0"), None);
+        assert_eq!(parse_agent_env_hint(b"INNOV_AGENT=not-an-agent\0"), None);
     }
 
     #[cfg(any(target_os = "linux", target_os = "macos"))]

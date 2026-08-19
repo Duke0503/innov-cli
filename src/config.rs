@@ -24,7 +24,7 @@ pub use self::{
         validated_sidebar_bounds, AgentPanelSortConfig, Config, ConfigReloadReport,
         ConfigReloadStatus, HostCursorModeConfig, NewTerminalCwdConfig, ShellModeConfig,
         SidebarCollapsedModeConfig, StatusIndicatorStyle, TabBarPositionConfig,
-        ToastClipboardPosition, ToastConfig, ToastDelivery, ToastHerdrPosition,
+        ToastClipboardPosition, ToastConfig, ToastDelivery, ToastInnovPosition,
         UpdateChannelConfig, MAX_TOAST_DELAY_SECONDS,
     },
     sidebar::{
@@ -49,8 +49,9 @@ pub(crate) use self::{
     window_title::{sanitize_window_title_text, window_title_diagnostics},
 };
 
-pub const CONFIG_PATH_ENV_VAR: &str = "CLI_CONFIG_PATH";
-pub const LEGACY_CONFIG_PATH_ENV_VAR: &str = "HERDR_CONFIG_PATH";
+pub const CONFIG_PATH_ENV_VAR: &str = "INNOV_CONFIG_PATH";
+pub const LEGACY_CONFIG_PATH_ENV_VAR: &str = "CLI_CONFIG_PATH";
+pub const LEGACY_HERDR_CONFIG_PATH_ENV_VAR: &str = "HERDR_CONFIG_PATH";
 pub const DEFAULT_SCROLLBACK_LIMIT_BYTES: usize = 10_000_000;
 pub const DEFAULT_MOUSE_SCROLL_LINES: usize = 3;
 pub const DEFAULT_MOBILE_WIDTH_THRESHOLD: u16 = 64;
@@ -77,7 +78,7 @@ impl Config {
         self.validated_keybinds().1
     }
 
-    /// Parsed keybinds for Herdr actions.
+    /// Parsed keybinds for Innov actions.
     pub fn keybinds(&self) -> Keybinds {
         self.validated_keybinds().3
     }

@@ -32,7 +32,7 @@ fn rewrite_schema_refs(value: &mut serde_json::Value, schema_name: &str) {
 fn protocol_schema_document() -> serde_json::Value {
     serde_json::json!({
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "Herdr API",
+        "title": "Innov API",
         "schema_version": 1,
         "protocol": crate::protocol::PROTOCOL_VERSION,
         "schemas": {
@@ -157,9 +157,12 @@ fn generated_protocol_schema_artifact_is_current() {
         serde_json::to_string_pretty(&protocol_schema_document()).unwrap()
     );
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("docs/next/api/herdr-api.schema.json");
+        .join("docs/next/api/innov-api.schema.json");
 
-    if std::env::var_os("HERDR_UPDATE_API_SCHEMA").is_some() {
+    if std::env::var_os("INNOV_UPDATE_API_SCHEMA")
+        .or_else(|| std::env::var_os("HERDR_UPDATE_API_SCHEMA"))
+        .is_some()
+    {
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         std::fs::write(&path, &actual).unwrap();
         return;
@@ -167,14 +170,14 @@ fn generated_protocol_schema_artifact_is_current() {
 
     let expected = std::fs::read_to_string(&path).unwrap_or_else(|err| {
         panic!(
-            "failed to read {}; run `HERDR_UPDATE_API_SCHEMA=1 just test-one generated_protocol_schema_artifact_is_current`: {err}",
+            "failed to read {}; run `INNOV_UPDATE_API_SCHEMA=1 just test-one generated_protocol_schema_artifact_is_current`: {err}",
             path.display()
         )
     });
     assert_eq!(
         expected,
         actual,
-        "generated API schema artifact is stale; run `HERDR_UPDATE_API_SCHEMA=1 just test-one generated_protocol_schema_artifact_is_current`"
+        "generated API schema artifact is stale; run `INNOV_UPDATE_API_SCHEMA=1 just test-one generated_protocol_schema_artifact_is_current`"
     );
 }
 
@@ -256,7 +259,7 @@ fn notification_show_request_parses() {
     assert_eq!(params.body.as_deref(), Some("api workspace"));
     assert_eq!(
         params.position,
-        Some(crate::config::ToastHerdrPosition::TopLeft)
+        Some(crate::config::ToastInnovPosition::TopLeft)
     );
     assert_eq!(params.sound, NotificationShowSound::Request);
 }
@@ -277,12 +280,12 @@ fn client_window_title_requests_round_trip() {
     let set = Request {
         id: "req_title_set".into(),
         method: Method::ClientWindowTitleSet(ClientWindowTitleSetParams {
-            title: "herdr api".into(),
+            title: "innov api".into(),
         }),
     };
     let json = serde_json::to_value(&set).unwrap();
     assert_eq!(json["method"], "client.window_title.set");
-    assert_eq!(json["params"]["title"], "herdr api");
+    assert_eq!(json["params"]["title"], "innov api");
     let restored: Request = serde_json::from_value(json).unwrap();
     assert_eq!(restored, set);
 
@@ -706,7 +709,7 @@ fn worktree_request_and_response_round_trip() {
             workspace: WorkspaceInfo {
                 workspace_id: "w_1".into(),
                 number: 2,
-                label: "herdr".into(),
+                label: "innov".into(),
                 focused: true,
                 pane_count: 1,
                 tab_count: 1,
@@ -714,10 +717,10 @@ fn worktree_request_and_response_round_trip() {
                 agent_status: AgentStatus::Unknown,
                 tokens: HashMap::new(),
                 worktree: Some(WorkspaceWorktreeInfo {
-                    repo_key: "/repo/herdr/.git".into(),
-                    repo_name: "herdr".into(),
-                    repo_root: "/repo/herdr".into(),
-                    checkout_path: "/worktrees/herdr/worktree-api".into(),
+                    repo_key: "/repo/innov/.git".into(),
+                    repo_name: "innov".into(),
+                    repo_root: "/repo/innov".into(),
+                    checkout_path: "/worktrees/innov/worktree-api".into(),
                     is_linked_worktree: true,
                 }),
             },
@@ -725,7 +728,7 @@ fn worktree_request_and_response_round_trip() {
                 tab_id: "w_1:1".into(),
                 workspace_id: "w_1".into(),
                 number: 1,
-                label: "herdr".into(),
+                label: "innov".into(),
                 focused: true,
                 pane_count: 1,
                 agent_status: AgentStatus::Unknown,
@@ -736,7 +739,7 @@ fn worktree_request_and_response_round_trip() {
                 workspace_id: "w_1".into(),
                 tab_id: "w_1:1".into(),
                 focused: true,
-                cwd: Some("/worktrees/herdr/worktree-api".into()),
+                cwd: Some("/worktrees/innov/worktree-api".into()),
                 foreground_cwd: None,
                 label: None,
                 agent: None,
@@ -752,14 +755,14 @@ fn worktree_request_and_response_round_trip() {
                 revision: 0,
             },
             worktree: WorktreeInfo {
-                path: "/worktrees/herdr/worktree-api".into(),
+                path: "/worktrees/innov/worktree-api".into(),
                 branch: Some("worktree/api".into()),
                 is_bare: false,
                 is_detached: false,
                 is_prunable: false,
                 is_linked_worktree: true,
                 open_workspace_id: Some("w_1".into()),
-                label: "herdr".into(),
+                label: "innov".into(),
             },
         },
     };
@@ -792,7 +795,7 @@ fn worktree_lifecycle_events_round_trip() {
     let workspace = WorkspaceInfo {
         workspace_id: "w_2".into(),
         number: 2,
-        label: "herdr".into(),
+        label: "innov".into(),
         focused: true,
         pane_count: 1,
         tab_count: 1,
@@ -800,22 +803,22 @@ fn worktree_lifecycle_events_round_trip() {
         agent_status: AgentStatus::Unknown,
         tokens: HashMap::new(),
         worktree: Some(WorkspaceWorktreeInfo {
-            repo_key: "/repo/herdr/.git".into(),
-            repo_name: "herdr".into(),
-            repo_root: "/repo/herdr".into(),
-            checkout_path: "/worktrees/herdr/worktree-api".into(),
+            repo_key: "/repo/innov/.git".into(),
+            repo_name: "innov".into(),
+            repo_root: "/repo/innov".into(),
+            checkout_path: "/worktrees/innov/worktree-api".into(),
             is_linked_worktree: true,
         }),
     };
     let worktree = WorktreeInfo {
-        path: "/worktrees/herdr/worktree-api".into(),
+        path: "/worktrees/innov/worktree-api".into(),
         branch: Some("worktree/api".into()),
         is_bare: false,
         is_detached: false,
         is_prunable: false,
         is_linked_worktree: true,
         open_workspace_id: Some("w_2".into()),
-        label: "herdr".into(),
+        label: "innov".into(),
     };
 
     for event in [
@@ -901,9 +904,9 @@ fn plugin_link_list_unlink_round_trip() {
         plugin_id: "example.worktree-bootstrap".into(),
         name: "Worktree Bootstrap".into(),
         version: "0.1.0".into(),
-        min_herdr_version: crate::build_info::BASE_VERSION.into(),
+        min_innov_version: crate::build_info::BASE_VERSION.into(),
         description: Some("Prepare new worktrees".into()),
-        manifest_path: "/plugins/worktree-bootstrap/herdr-plugin.toml".into(),
+        manifest_path: "/plugins/worktree-bootstrap/innov-plugin.toml".into(),
         plugin_root: "/plugins/worktree-bootstrap".into(),
         enabled: true,
         platforms: None,
@@ -989,7 +992,7 @@ fn layout_export_apply_round_trip() {
             pane: LayoutPane {
                 label: Some("tests".into()),
                 command: Some(vec!["sh".into(), "-c".into(), "just test".into()]),
-                env: HashMap::from([("HERDR_ROLE".into(), "tests".into())]),
+                env: HashMap::from([("INNOV_ROLE".into(), "tests".into())]),
                 ..Default::default()
             },
         }),
@@ -1293,7 +1296,7 @@ fn plugin_pane_open_request_round_trips() {
             direction: None,
             cwd: Some("/tmp".into()),
             focus: true,
-            env: [("HERDR_ROLE".to_string(), "board".to_string())].into(),
+            env: [("INNOV_ROLE".to_string(), "board".to_string())].into(),
         }),
     };
 
@@ -1302,7 +1305,7 @@ fn plugin_pane_open_request_round_trips() {
     assert_eq!(json["params"]["placement"], "popup");
     assert_eq!(json["params"]["width"], 90);
     assert_eq!(json["params"]["height"], "80%");
-    assert_eq!(json["params"]["env"]["HERDR_ROLE"], "board");
+    assert_eq!(json["params"]["env"]["INNOV_ROLE"], "board");
     let restored: Request = serde_json::from_value(json).unwrap();
     assert_eq!(restored, request);
 }

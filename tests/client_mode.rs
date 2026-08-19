@@ -17,7 +17,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use support::{
     cleanup_test_base, client_handshake, encode_varint_u32, frame_message, read_server_message,
-    register_runtime_dir, register_spawned_herdr_pid, unregister_spawned_herdr_pid,
+    register_runtime_dir, register_spawned_innov_pid, unregister_spawned_innov_pid,
     wait_for_message_variant, wait_for_socket, wait_until, CURRENT_PROTOCOL,
 };
 
@@ -27,23 +27,23 @@ fn unique_test_dir() -> PathBuf {
         .map(|d| d.as_nanos())
         .unwrap_or(0);
     PathBuf::from(format!(
-        "/tmp/herdr-client-test-{}-{nanos}",
+        "/tmp/innov-client-test-{}-{nanos}",
         std::process::id()
     ))
 }
 
-struct SpawnedHerdr {
+struct SpawnedInnov {
     _master: Option<Box<dyn MasterPty + Send>>,
     child: Box<dyn Child + Send + Sync>,
 }
 
-impl SpawnedHerdr {
+impl SpawnedInnov {
     fn close_master(&mut self) {
         drop(self._master.take());
     }
 }
 
-impl Drop for SpawnedHerdr {
+impl Drop for SpawnedInnov {
     fn drop(&mut self) {
         let pid = self.child.process_id();
         let _ = self.child.kill();
@@ -61,12 +61,12 @@ impl Drop for SpawnedHerdr {
                 thread::sleep(Duration::from_millis(20));
             }
 
-            unregister_spawned_herdr_pid(Some(pid));
+            unregister_spawned_innov_pid(Some(pid));
         }
     }
 }
 
-fn cleanup_spawned_herdr(spawned: SpawnedHerdr, base: PathBuf) {
+fn cleanup_spawned_innov(spawned: SpawnedInnov, base: PathBuf) {
     drop(spawned);
     cleanup_test_base(&base);
 }
@@ -82,7 +82,7 @@ fn spawn_client_process(
     config_home: &PathBuf,
     runtime_dir: &PathBuf,
     api_socket_path: &PathBuf,
-) -> SpawnedHerdr {
+) -> SpawnedInnov {
     register_runtime_dir(runtime_dir);
     let pair = native_pty_system()
         .openpty(PtySize {
@@ -93,27 +93,27 @@ fn spawn_client_process(
         })
         .unwrap();
 
-    let mut cmd = CommandBuilder::new(env!("CARGO_BIN_EXE_cli"));
+    let mut cmd = CommandBuilder::new(env!("CARGO_BIN_EXE_innov"));
     cmd.arg("client");
-    cmd.env("HERDR_DISABLE_SOUND", "1");
+    cmd.env("INNOV_DISABLE_SOUND", "1");
     cmd.env("XDG_CONFIG_HOME", config_home);
     cmd.env("XDG_RUNTIME_DIR", runtime_dir);
-    cmd.env("HERDR_SOCKET_PATH", api_socket_path);
-    cmd.env_remove("HERDR_CLIENT_SOCKET_PATH");
+    cmd.env("INNOV_SOCKET_PATH", api_socket_path);
+    cmd.env_remove("INNOV_CLIENT_SOCKET_PATH");
     cmd.env("SHELL", "/bin/sh");
-    cmd.env_remove("HERDR_ENV");
+    cmd.env_remove("INNOV_ENV");
 
     let child = pair.slave.spawn_command(cmd).unwrap();
-    register_spawned_herdr_pid(child.process_id());
+    register_spawned_innov_pid(child.process_id());
     drop(pair.slave);
 
-    SpawnedHerdr {
+    SpawnedInnov {
         _master: Some(pair.master),
         child,
     }
 }
 
-fn spawn_no_session_process(config_home: &PathBuf, runtime_dir: &PathBuf) -> SpawnedHerdr {
+fn spawn_no_session_process(config_home: &PathBuf, runtime_dir: &PathBuf) -> SpawnedInnov {
     fs::create_dir_all(config_home.join(app_dir_name())).unwrap();
     fs::create_dir_all(runtime_dir).unwrap();
     register_runtime_dir(runtime_dir);
@@ -131,23 +131,23 @@ fn spawn_no_session_process(config_home: &PathBuf, runtime_dir: &PathBuf) -> Spa
             pixel_height: 0,
         })
         .unwrap();
-    let mut cmd = CommandBuilder::new(env!("CARGO_BIN_EXE_cli"));
+    let mut cmd = CommandBuilder::new(env!("CARGO_BIN_EXE_innov"));
     cmd.arg("--no-session");
     cmd.env("XDG_CONFIG_HOME", config_home);
     cmd.env("XDG_RUNTIME_DIR", runtime_dir);
     cmd.env("SHELL", "/bin/sh");
-    cmd.env_remove("HERDR_ENV");
-    cmd.env_remove("HERDR_SOCKET_PATH");
-    cmd.env_remove("HERDR_CLIENT_SOCKET_PATH");
-    cmd.env_remove("HERDR_SESSION");
-    cmd.env_remove("HERDR_WORKSPACE_ID");
-    cmd.env_remove("HERDR_TAB_ID");
-    cmd.env_remove("HERDR_PANE_ID");
+    cmd.env_remove("INNOV_ENV");
+    cmd.env_remove("INNOV_SOCKET_PATH");
+    cmd.env_remove("INNOV_CLIENT_SOCKET_PATH");
+    cmd.env_remove("INNOV_SESSION");
+    cmd.env_remove("INNOV_WORKSPACE_ID");
+    cmd.env_remove("INNOV_TAB_ID");
+    cmd.env_remove("INNOV_PANE_ID");
     let child = pair.slave.spawn_command(cmd).unwrap();
-    register_spawned_herdr_pid(child.process_id());
+    register_spawned_innov_pid(child.process_id());
     drop(pair.slave);
 
-    SpawnedHerdr {
+    SpawnedInnov {
         _master: Some(pair.master),
         child,
     }
@@ -158,7 +158,7 @@ fn spawn_server(
     runtime_dir: &PathBuf,
     api_socket_path: &PathBuf,
     client_socket_path: &PathBuf,
-) -> SpawnedHerdr {
+) -> SpawnedInnov {
     spawn_server_with_config(
         config_home,
         runtime_dir,
@@ -174,7 +174,7 @@ fn spawn_server_with_config(
     api_socket_path: &PathBuf,
     _client_socket_path: &PathBuf,
     config: &str,
-) -> SpawnedHerdr {
+) -> SpawnedInnov {
     fs::create_dir_all(config_home.join(app_dir_name())).unwrap();
     fs::create_dir_all(runtime_dir).unwrap();
     register_runtime_dir(runtime_dir);
@@ -189,20 +189,20 @@ fn spawn_server_with_config(
         })
         .unwrap();
 
-    let mut cmd = CommandBuilder::new(env!("CARGO_BIN_EXE_cli"));
+    let mut cmd = CommandBuilder::new(env!("CARGO_BIN_EXE_innov"));
     cmd.arg("server");
     cmd.env("XDG_CONFIG_HOME", config_home);
     cmd.env("XDG_RUNTIME_DIR", runtime_dir);
-    cmd.env("HERDR_SOCKET_PATH", api_socket_path);
-    cmd.env_remove("HERDR_CLIENT_SOCKET_PATH");
+    cmd.env("INNOV_SOCKET_PATH", api_socket_path);
+    cmd.env_remove("INNOV_CLIENT_SOCKET_PATH");
     cmd.env("SHELL", "/bin/sh");
-    cmd.env_remove("HERDR_ENV");
+    cmd.env_remove("INNOV_ENV");
 
     let child = pair.slave.spawn_command(cmd).unwrap();
-    register_spawned_herdr_pid(child.process_id());
+    register_spawned_innov_pid(child.process_id());
     drop(pair.slave);
 
-    SpawnedHerdr {
+    SpawnedInnov {
         _master: Some(pair.master),
         child,
     }
@@ -251,9 +251,9 @@ fn first_pane_id_in_workspace(socket_path: &PathBuf, workspace_id: &str) -> Stri
 
 fn app_dir_name() -> &'static str {
     if cfg!(debug_assertions) {
-        "cli-dev"
+        "innov-dev"
     } else {
-        "herdr"
+        "innov"
     }
 }
 
@@ -355,8 +355,8 @@ fn client_connects_and_receives_frame() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let spawned = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
     wait_for_socket(&api_socket, Duration::from_secs(10));
@@ -379,7 +379,7 @@ fn client_connects_and_receives_frame() {
     read_next_frame_payload(&mut stream, Duration::from_secs(10))
         .expect("should receive a frame from server");
 
-    cleanup_spawned_herdr(spawned, base);
+    cleanup_spawned_innov(spawned, base);
 }
 
 #[test]
@@ -388,13 +388,13 @@ fn client_sees_headless_startup_config_diagnostic() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let app_dir = if cfg!(debug_assertions) {
-        "cli-dev"
+        "innov-dev"
     } else {
-        "herdr"
+        "innov"
     };
     fs::create_dir_all(config_home.join(app_dir)).unwrap();
     fs::write(
@@ -414,20 +414,20 @@ fn client_sees_headless_startup_config_diagnostic() {
         })
         .unwrap();
 
-    let mut cmd = CommandBuilder::new(env!("CARGO_BIN_EXE_cli"));
+    let mut cmd = CommandBuilder::new(env!("CARGO_BIN_EXE_innov"));
     cmd.arg("server");
     cmd.env("XDG_CONFIG_HOME", &config_home);
     cmd.env("XDG_RUNTIME_DIR", &runtime_dir);
-    cmd.env("HERDR_SOCKET_PATH", &api_socket);
-    cmd.env_remove("HERDR_CLIENT_SOCKET_PATH");
+    cmd.env("INNOV_SOCKET_PATH", &api_socket);
+    cmd.env_remove("INNOV_CLIENT_SOCKET_PATH");
     cmd.env("SHELL", "/bin/sh");
-    cmd.env_remove("HERDR_ENV");
+    cmd.env_remove("INNOV_ENV");
 
     let child = pair.slave.spawn_command(cmd).unwrap();
-    register_spawned_herdr_pid(child.process_id());
+    register_spawned_innov_pid(child.process_id());
     drop(pair.slave);
 
-    let spawned = SpawnedHerdr {
+    let spawned = SpawnedInnov {
         _master: Some(pair.master),
         child,
     };
@@ -452,7 +452,7 @@ fn client_sees_headless_startup_config_diagnostic() {
                 let frame = decode_frame_payload(&payload).expect("decode frame");
                 last_frame_text = frame_text(&frame);
                 if last_frame_text.contains("config.toml")
-                    && last_frame_text.contains("herdr config check")
+                    && last_frame_text.contains("innov config check")
                 {
                     found_diagnostic = true;
                     break;
@@ -468,7 +468,7 @@ fn client_sees_headless_startup_config_diagnostic() {
         "attached client should see startup config parse diagnostic; last frame:\n{last_frame_text}"
     );
 
-    cleanup_spawned_herdr(spawned, base);
+    cleanup_spawned_innov(spawned, base);
 }
 
 #[test]
@@ -479,21 +479,21 @@ fn server_unreachable_shows_clear_error() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
+    let api_socket = runtime_dir.join("innov.sock");
 
     fs::create_dir_all(config_home.join("cli")).unwrap();
     fs::create_dir_all(&runtime_dir).unwrap();
     register_runtime_dir(&runtime_dir);
     fs::write(config_home.join("cli/config.toml"), "onboarding = false\n").unwrap();
 
-    let output = std::process::Command::new(env!("CARGO_BIN_EXE_cli"))
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_innov"))
         .arg("client")
-        .env("HERDR_DISABLE_SOUND", "1")
+        .env("INNOV_DISABLE_SOUND", "1")
         .env("XDG_CONFIG_HOME", &config_home)
         .env("XDG_RUNTIME_DIR", &runtime_dir)
-        .env("HERDR_SOCKET_PATH", &api_socket)
-        .env_remove("HERDR_CLIENT_SOCKET_PATH")
-        .env_remove("HERDR_ENV")
+        .env("INNOV_SOCKET_PATH", &api_socket)
+        .env_remove("INNOV_CLIENT_SOCKET_PATH")
+        .env_remove("INNOV_ENV")
         .output()
         .expect("client command should run");
 
@@ -507,7 +507,7 @@ fn server_unreachable_shows_clear_error() {
         "stderr should mention connection failure: {stderr}"
     );
     assert!(
-        stderr.contains("Is herdr server running?"),
+        stderr.contains("Is innov server running?"),
         "stderr should include actionable guidance: {stderr}"
     );
     assert!(
@@ -526,8 +526,8 @@ fn server_crash_after_attach_causes_lost_connection_error() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let mut spawned = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
     wait_for_socket(&api_socket, Duration::from_secs(10));
@@ -694,7 +694,7 @@ fn attach_thin_client(
     runtime_dir: &PathBuf,
     api_socket: &PathBuf,
     client_socket: &PathBuf,
-) -> (SpawnedHerdr, SpawnedHerdr, SharedOutput) {
+) -> (SpawnedInnov, SpawnedInnov, SharedOutput) {
     attach_thin_client_with_config(
         config_home,
         runtime_dir,
@@ -710,7 +710,7 @@ fn attach_thin_client_with_config(
     api_socket: &PathBuf,
     client_socket: &PathBuf,
     config: &str,
-) -> (SpawnedHerdr, SpawnedHerdr, SharedOutput) {
+) -> (SpawnedInnov, SpawnedInnov, SharedOutput) {
     let spawned_server =
         spawn_server_with_config(config_home, runtime_dir, api_socket, client_socket, config);
     wait_for_socket(api_socket, Duration::from_secs(10));
@@ -829,7 +829,7 @@ fn configured_window_title_is_emitted_in_no_session_mode() {
 
     wait_for_window_title(&output, "monolithic");
 
-    cleanup_spawned_herdr(no_session, base);
+    cleanup_spawned_innov(no_session, base);
 }
 
 #[test]
@@ -838,8 +838,8 @@ fn configured_window_title_tracks_all_tokens_and_focused_osc_only() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
     let (server, client, output) = attach_thin_client_with_config(
         &config_home,
         &runtime_dir,
@@ -948,14 +948,14 @@ fn configured_window_title_tracks_all_tokens_and_focused_osc_only() {
     wait_for_window_title(&output, "|W=space-a|T=tab-a|P=pane-a|O=hidden update");
 
     drop(server);
-    cleanup_spawned_herdr(client, base);
+    cleanup_spawned_innov(client, base);
 }
 
 /// Polls until the client exits, then returns only the output captured after
 /// the `since` byte watermark. Panics if the client does not exit within the
 /// deadline.
 fn drain_until_client_exits(
-    thin_client: &mut SpawnedHerdr,
+    thin_client: &mut SpawnedInnov,
     output: &SharedOutput,
     since: usize,
 ) -> String {
@@ -979,13 +979,13 @@ fn drain_until_client_exits(
 /// client emits the mouse teardown after that point. The teardown markers also
 /// appear in normal attach output, so only bytes emitted after the trigger
 /// (past the watermark) count.
-fn assert_client_restores_terminal(trigger: impl FnOnce(&mut SpawnedHerdr, &mut SpawnedHerdr)) {
+fn assert_client_restores_terminal(trigger: impl FnOnce(&mut SpawnedInnov, &mut SpawnedInnov)) {
     let _lock = test_lock();
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let (mut spawned_server, mut thin_client, pty_output) =
         attach_thin_client(&config_home, &runtime_dir, &api_socket, &client_socket);
@@ -999,9 +999,9 @@ fn assert_client_restores_terminal(trigger: impl FnOnce(&mut SpawnedHerdr, &mut 
         "client must emit mouse teardown after trigger; output after trigger: {output:?}"
     );
 
-    // SpawnedHerdr::Drop kills and reaps both processes with a bounded wait.
+    // SpawnedInnov::Drop kills and reaps both processes with a bounded wait.
     drop(spawned_server);
-    cleanup_spawned_herdr(thin_client, base);
+    cleanup_spawned_innov(thin_client, base);
 }
 
 /// The `--remote` ssh-death path: killing the bridge closes the socket, the
@@ -1013,7 +1013,7 @@ fn client_restores_terminal_on_server_eof() {
     assert_client_restores_terminal(|server, _client| {
         // Kill the server unexpectedly; the client socket closes and the
         // client reader hits EOF, mirroring the ssh bridge dying under
-        // `herdr --remote`.
+        // `innov --remote`.
         if let Some(pid) = server.child.process_id() {
             unsafe {
                 libc::kill(pid as libc::pid_t, libc::SIGKILL);
@@ -1036,7 +1036,7 @@ fn client_restores_terminal_on_sighup() {
     });
 }
 
-fn read_until_client_attaches(client: &SpawnedHerdr) -> String {
+fn read_until_client_attaches(client: &SpawnedInnov) -> String {
     let master = client._master.as_ref().expect("thin client master");
     let fd = master.as_raw_fd().expect("thin client PTY file descriptor");
     let flags = unsafe { libc::fcntl(fd, libc::F_GETFL) };
@@ -1077,8 +1077,8 @@ fn client_exits_cleanly_when_terminal_and_transport_hang_up() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let mut spawned_server = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
     wait_for_socket(&api_socket, Duration::from_secs(10));
@@ -1121,7 +1121,7 @@ fn client_exits_cleanly_when_terminal_and_transport_hang_up() {
     };
 
     drop(spawned_server);
-    cleanup_spawned_herdr(thin_client, base);
+    cleanup_spawned_innov(thin_client, base);
 
     let status = status.expect("thin client should exit after terminal and transport hang up");
     assert!(
@@ -1136,8 +1136,8 @@ fn client_exits_cleanly_when_terminal_hangs_up() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let spawned_server = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
     wait_for_socket(&api_socket, Duration::from_secs(10));
@@ -1162,7 +1162,7 @@ fn client_exits_cleanly_when_terminal_hangs_up() {
     let server_response = ping_socket(&api_socket);
 
     drop(spawned_server);
-    cleanup_spawned_herdr(thin_client, base);
+    cleanup_spawned_innov(thin_client, base);
 
     let status = status.unwrap_or_else(|| {
         panic!("thin client did not exit after PTY hangup; attach output: {attached_output:?}")
@@ -1190,8 +1190,8 @@ fn client_receives_frame_after_pane_output() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let spawned = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
     wait_for_socket(&api_socket, Duration::from_secs(10));
@@ -1225,7 +1225,7 @@ fn client_receives_frame_after_pane_output() {
         .expect("wait for post-output frame");
     assert!(received_frame, "should receive a Frame after pane output");
 
-    cleanup_spawned_herdr(spawned, base);
+    cleanup_spawned_innov(spawned, base);
 }
 
 #[test]
@@ -1237,8 +1237,8 @@ fn pane_spawn_cwd_fallback_in_server() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
     let data_dir = config_home.join(app_dir_name());
     let missing_cwd = base.join("missing-cwd-for-test");
     let missing_cwd = missing_cwd.to_str().expect("test cwd should be UTF-8");
@@ -1294,7 +1294,7 @@ fn pane_spawn_cwd_fallback_in_server() {
         "fallback cwd should exist: {cwd}"
     );
 
-    cleanup_spawned_herdr(spawned, base);
+    cleanup_spawned_innov(spawned, base);
 }
 
 #[test]
@@ -1305,8 +1305,8 @@ fn graceful_shutdown_sends_server_shutdown_to_client() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     let mut spawned = spawn_server(&config_home, &runtime_dir, &api_socket, &client_socket);
     wait_for_socket(&api_socket, Duration::from_secs(10));
@@ -1367,8 +1367,8 @@ fn client_receives_notify_on_agent_state_change() {
     let base = unique_test_dir();
     let config_home = base.join("config");
     let runtime_dir = base.join("runtime");
-    let api_socket = runtime_dir.join("herdr.sock");
-    let client_socket = runtime_dir.join("herdr-client.sock");
+    let api_socket = runtime_dir.join("innov.sock");
+    let client_socket = runtime_dir.join("innov-client.sock");
 
     // Enable toast and sound in config so the server produces notifications.
     fs::create_dir_all(config_home.join("cli")).unwrap();
@@ -1391,20 +1391,20 @@ fn client_receives_notify_on_agent_state_change() {
         })
         .unwrap();
 
-    let mut cmd = CommandBuilder::new(env!("CARGO_BIN_EXE_cli"));
+    let mut cmd = CommandBuilder::new(env!("CARGO_BIN_EXE_innov"));
     cmd.arg("server");
     cmd.env("XDG_CONFIG_HOME", &config_home);
     cmd.env("XDG_RUNTIME_DIR", &runtime_dir);
-    cmd.env("HERDR_SOCKET_PATH", &api_socket);
-    cmd.env_remove("HERDR_CLIENT_SOCKET_PATH");
+    cmd.env("INNOV_SOCKET_PATH", &api_socket);
+    cmd.env_remove("INNOV_CLIENT_SOCKET_PATH");
     cmd.env("SHELL", "/bin/sh");
-    cmd.env_remove("HERDR_ENV");
+    cmd.env_remove("INNOV_ENV");
 
     let child = pair.slave.spawn_command(cmd).unwrap();
-    register_spawned_herdr_pid(child.process_id());
+    register_spawned_innov_pid(child.process_id());
     drop(pair.slave);
 
-    let spawned = SpawnedHerdr {
+    let spawned = SpawnedInnov {
         _master: Some(pair.master),
         child,
     };
@@ -1582,5 +1582,5 @@ fn client_receives_notify_on_agent_state_change() {
         "client should receive a Sound Notify with 'agent done' when background pane transitions Working→Idle"
     );
 
-    cleanup_spawned_herdr(spawned, base);
+    cleanup_spawned_innov(spawned, base);
 }

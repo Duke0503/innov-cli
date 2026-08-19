@@ -36,7 +36,7 @@ async function disablePluginIndexRoute() {
   const path = resolve('node_modules/starlight-llms-txt/index.ts');
   const original = await readFile(path, 'utf8');
   const marker =
-    '\t\t\t\t\t\t\t// Herdr publishes channel-aware raw-source indexes from website/public.';
+    '\t\t\t\t\t\t\t// Innov publishes channel-aware raw-source indexes from website/public.';
   if (original.includes(marker)) return;
 
   const route = `\t\t\t\t\t\t\tinjectRoute({

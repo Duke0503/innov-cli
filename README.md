@@ -1,9 +1,9 @@
-# cli
+# Innov
 
-`cli` is a fork of [Herdr](https://github.com/herdrdev/herdr) for running
+`Innov` is an Innovators team tool for running
 multiple coding-agent CLIs in one persistent terminal workspace.
 
-It keeps Herdr's server, PTY, pane, workspace, and native-session handling,
+It provides the server, PTY, pane, workspace, and native-session handling,
 then adds a first-class handoff command. The handoff is explicit and bounded:
 the new agent receives a packet containing the workspace path, git status,
 diff summary, and recent terminal output. The workspace and git state remain
@@ -21,22 +21,22 @@ brew install zig
 cargo build --release
 ```
 
-The resulting binary is `target/release/cli`.
+The resulting binary is `target/release/innov`.
 
 ## Run
 
 Start or attach to the persistent workspace:
 
 ```bash
-cli
+innov
 ```
 
 Switch from an existing agent to another CLI in the same workspace:
 
 ```bash
-cli switch <agent-target> --to codex
-cli switch <agent-target> --to claude --context-tokens 2500
-cli switch <agent-target> --to agy --no-handoff
+innov switch <agent-target> --to codex
+innov switch <agent-target> --to claude --context-tokens 2500
+innov switch <agent-target> --to agy --no-handoff
 ```
 
 When an agent pane is focused, the same switch can be started from inside the
@@ -53,24 +53,24 @@ available. Other slash input is forwarded to the agent unchanged.
 
 ## Profiles and aliases
 
-Profiles port the AgentPort idea into `cli`: one named alias owns its provider,
+Profiles port the AgentPort idea into Innov: one named alias owns its provider,
 model, key source, and permission level. The registry is stored at
-`~/.config/cli/profiles.toml` (or the platform/config-dir equivalent), while
+`~/.config/innov/profiles.toml` (or the platform/config-dir equivalent), while
 CLI-specific overlays are written beside the native Claude/Codex config.
 
 Use an environment reference for keys when possible:
 
 ```bash
-cli profile add cx-luna --cli codex \
+innov profile add cx-luna --cli codex \
   --provider luna --base-url https://gateway.example/v1 \
   --api-key-env LUNA_CODEX_KEY --model luna-max --danger bypass
 
-cli profile add cc-luna --cli claude \
+innov profile add cc-luna --cli claude \
   --provider luna --base-url https://gateway.example \
   --api-key-env LUNA_CLAUDE_KEY --model luna-max --danger accept_edits
 
-cli profile install
-cli profile list
+innov profile install
+innov profile list
 ```
 
 After opening a new shell, the generated functions can be called directly:
@@ -78,15 +78,15 @@ After opening a new shell, the generated functions can be called directly:
 ```bash
 cx-luna --help
 cc-luna --resume
-cli switch reviewer --to cx-luna
+innov switch reviewer --to cx-luna
 ```
 
 Use `--api-key-stdin` instead of `--api-key` when creating a profile without
 putting the secret in the process argument list. Inline keys are supported for
 compatibility and are stored in the private profile registry. `--command` can
 name an existing shell command or alias for the generated function. When that
-profile is used with `cli switch`, the command is sent to the new pane too, so
-the alias must be available in that pane's shell; without `--command`, `cli`
+profile is used with `innov switch`, the command is sent to the new pane too, so
+the alias must be available in that pane's shell; without `--command`, Innov
 uses the native backend executable.
 
 The permission scale is translated per backend: `ask`, `accept_edits`,
@@ -95,9 +95,9 @@ The permission scale is translated per backend: `ask`, `accept_edits`,
 `sandbox_mode=workspace-write`. `bypass` enables full Codex access and Claude
 `bypassPermissions`, so it should be used only for trusted workspaces.
 
-The original pane remains available. `cli switch` creates a new pane, starts
+The original pane remains available. `innov switch` creates a new pane, starts
 the selected native CLI directly through the internal API, sends the handoff
-packet, and focuses the new pane. It does not invoke an installed `herdr`
+packet, and focuses the new pane. It does not invoke an installed `innov`
 binary.
 
 ## Context Guarantees
@@ -107,7 +107,7 @@ handoff reduces context loss by making the transfer deterministic, but it
 cannot recreate hidden provider-side context. The receiving agent is told to
 inspect the workspace and diff before acting.
 
-Handoff packets are stored under `~/.config/cli/handoffs` and are bounded by
+Handoff packets are stored under `~/.config/innov/handoffs` and are bounded by
 `--context-tokens` (approximately four characters per token).
 
 ## Development

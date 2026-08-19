@@ -1,8 +1,8 @@
 //! Native backend switching built into the forked CLI.
 //!
-//! Herdr already owns the PTYs and native agent sessions. This command adds a
+//! Innov already owns the PTYs and native agent sessions. This command adds a
 //! logical handoff layer on top of that runtime without invoking another
-//! `herdr` executable.
+//! `innov` executable.
 
 use std::io;
 use std::path::{Path, PathBuf};
@@ -55,7 +55,7 @@ pub(super) fn run_switch_command(args: &[String]) -> io::Result<i32> {
 fn parse_switch_options(args: &[String]) -> Result<Option<SwitchOptions>, String> {
     let Some(source) = args.first().filter(|value| !value.starts_with('-')) else {
         return Err(
-            "usage: cli switch <agent-target> --to <codex|claude|agy|profile-alias> [OPTIONS]"
+            "usage: innov switch <agent-target> --to <codex|claude|agy|profile-alias> [OPTIONS]"
                 .into(),
         );
     };
@@ -277,7 +277,7 @@ fn write_handoff(
     let home = std::env::var_os("HOME")
         .map(PathBuf::from)
         .unwrap_or_else(|| cwd.to_path_buf());
-    let directory = home.join(".config/cli/handoffs");
+    let directory = home.join(".config/innov/handoffs");
     std::fs::create_dir_all(&directory)?;
     let path = directory.join(format!("{}-to-{}.md", timestamp_millis(), target));
 
@@ -373,8 +373,8 @@ fn timestamp_millis() -> u128 {
 }
 
 fn print_switch_help() {
-    eprintln!("cli switch commands:");
-    eprintln!("  cli switch <agent-target> --to <codex|claude|agy|profile-alias> [OPTIONS]");
+    eprintln!("innov switch commands:");
+    eprintln!("  innov switch <agent-target> --to <codex|claude|agy|profile-alias> [OPTIONS]");
     eprintln!("    --context-tokens N   bound the handoff packet (default: 3500)");
     eprintln!("    --no-handoff         start the backend without sending context");
     eprintln!("    --timeout MS         backend startup/prompt timeout (default: 120000)");

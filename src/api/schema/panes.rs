@@ -19,7 +19,8 @@ use super::common::{AgentStatus, PaneAgentState, ReadFormat, ReadSource, SplitDi
 #[serde(rename_all = "snake_case")]
 pub enum PaneRightClickTarget {
     #[default]
-    Herdr,
+    #[serde(alias = "herdr")]
+    Innov,
     Pane,
 }
 

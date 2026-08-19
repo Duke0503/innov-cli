@@ -13,9 +13,10 @@ use super::command::shell_single_quote;
 use super::config_edit::{
     build_codex_config_with_hooks, build_kimi_config_with_hooks, ensure_command_hook,
     ensure_direct_command_hook, ensure_flat_command_hook, ensure_hermes_plugin_enabled,
-    ensure_hooks_object, ensure_simple_command_hook, hooks_object_if_present,
-    remove_direct_hook_commands, remove_flat_command_hook, remove_hermes_plugin_enabled,
-    remove_hook_commands, remove_kimi_config_block, remove_simple_command_hook,
+    ensure_hooks_object, ensure_simple_command_hook, hook_command_variants,
+    hooks_object_if_present, remove_direct_hook_commands, remove_flat_command_hook,
+    remove_hermes_plugin_enabled, remove_hook_commands, remove_kimi_config_block,
+    remove_simple_command_hook,
 };
 use super::env::{
     antigravity_cli_dir, claude_dir, codex_dir, copilot_dir, cursor_dir, devin_dir, droid_dir,
@@ -23,7 +24,8 @@ use super::env::{
     opencode_dir, pi_extension_dir, qodercli_dir, qwen_dir,
 };
 use super::file_ops::{
-    make_executable, remove_dir_all_if_exists, remove_file_if_exists, remove_legacy_bash_hook_file,
+    legacy_bash_hook_path, make_executable, remove_dir_all_if_exists, remove_file_if_exists,
+    remove_legacy_bash_hook_file,
 };
 use super::opencode_config::{
     add_tui_plugin, remove_tui_plugin, tui_config_path, validate_tui_plugin_config,
@@ -50,7 +52,8 @@ use super::{
     GROK_HOOK_ASSET, GROK_HOOK_CONFIG_INSTALL_NAME, GROK_HOOK_INSTALL_NAME,
     HERMES_PLUGIN_INIT_ASSET, HERMES_PLUGIN_INIT_INSTALL_NAME, HERMES_PLUGIN_MANIFEST_ASSET,
     HERMES_PLUGIN_MANIFEST_INSTALL_NAME, KILO_PLUGIN_ASSET, KILO_PLUGIN_INSTALL_NAME,
-    KIMI_HOOK_ASSET, KIMI_HOOK_INSTALL_NAME, MASTRACODE_HOOK_ASSET, MASTRACODE_HOOK_EVENTS,
+    KIMI_HOOK_ASSET, KIMI_HOOK_INSTALL_NAME, LEGACY_ANTIGRAVITY_CLI_HOOK_BLOCK_NAME,
+    LEGACY_GROK_HOOK_CONFIG_INSTALL_NAME, MASTRACODE_HOOK_ASSET, MASTRACODE_HOOK_EVENTS,
     MASTRACODE_HOOK_INSTALL_NAME, MASTRACODE_HOOK_TIMEOUT_MS, MASTRACODE_REMOVED_HOOK_EVENTS,
     OMP_EXTENSION_ASSET, OMP_EXTENSION_INSTALL_NAME, OPENCODE_PLUGIN_ASSET,
     OPENCODE_PLUGIN_INSTALL_NAME, OPENCODE_TUI_PLUGIN_ASSET, OPENCODE_TUI_PLUGIN_INSTALL_NAME,
@@ -76,6 +79,7 @@ pub(crate) fn install_pi() -> io::Result<PathBuf> {
     let dir = pi_extension_dir()?;
     ensure_extension_dir(&dir, "pi")?;
 
+    remove_legacy_managed_file(&dir.join(super::LEGACY_PI_EXTENSION_INSTALL_NAME))?;
     let path = dir.join(PI_EXTENSION_INSTALL_NAME);
     fs::write(&path, PI_EXTENSION_ASSET)?;
     Ok(path)
@@ -92,7 +96,8 @@ pub(crate) fn install_omp() -> io::Result<OmpInstallPaths> {
     }
     ensure_extension_dir(&dir, "omp")?;
 
-    let removed_legacy_pi_extension = remove_legacy_pi_extension_from_omp_dir(&dir)?;
+    let removed_legacy_pi_extension = remove_legacy_pi_extension_from_omp_dir(&dir)?
+        | remove_legacy_managed_file(&dir.join(super::LEGACY_OMP_EXTENSION_INSTALL_NAME))?;
     let extension_path = dir.join(OMP_EXTENSION_INSTALL_NAME);
     fs::write(&extension_path, OMP_EXTENSION_ASSET)?;
     Ok(OmpInstallPaths {
@@ -102,7 +107,7 @@ pub(crate) fn install_omp() -> io::Result<OmpInstallPaths> {
 }
 
 pub(crate) fn remove_legacy_pi_extension_from_omp_dir(dir: &Path) -> io::Result<bool> {
-    let legacy_path = dir.join(PI_EXTENSION_INSTALL_NAME);
+    let legacy_path = dir.join(super::LEGACY_PI_EXTENSION_INSTALL_NAME);
     if !legacy_path.is_file() {
         return Ok(false);
     }
@@ -114,6 +119,19 @@ pub(crate) fn remove_legacy_pi_extension_from_omp_dir(dir: &Path) -> io::Result<
     }
 
     Ok(false)
+}
+
+fn remove_legacy_managed_file(path: &Path) -> io::Result<bool> {
+    let content = match fs::read_to_string(path) {
+        Ok(content) => content,
+        Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(false),
+        Err(err) => return Err(err),
+    };
+    if !content.contains("HERDR_INTEGRATION_ID=") {
+        return Ok(false);
+    }
+    fs::remove_file(path)?;
+    Ok(true)
 }
 
 pub(crate) fn install_claude() -> io::Result<ClaudeInstallPaths> {
@@ -461,6 +479,9 @@ pub(crate) fn install_opencode() -> io::Result<OpenCodeInstallPaths> {
     let plugins_dir = dir.join("plugins");
     fs::create_dir_all(&plugins_dir)?;
 
+    remove_legacy_managed_file(&plugins_dir.join(super::LEGACY_OPENCODE_PLUGIN_INSTALL_NAME))?;
+    remove_legacy_managed_file(&dir.join(super::LEGACY_OPENCODE_TUI_PLUGIN_INSTALL_NAME))?;
+    remove_tui_plugin(&dir, super::LEGACY_OPENCODE_TUI_PLUGIN_SPEC)?;
     let plugin_path = plugins_dir.join(OPENCODE_PLUGIN_INSTALL_NAME);
     fs::write(&plugin_path, OPENCODE_PLUGIN_ASSET)?;
     let tui_plugin_path = dir.join(OPENCODE_TUI_PLUGIN_INSTALL_NAME);
@@ -486,6 +507,7 @@ pub(crate) fn install_kilo() -> io::Result<KiloInstallPaths> {
     let plugins_dir = dir.join("plugin");
     fs::create_dir_all(&plugins_dir)?;
 
+    remove_legacy_managed_file(&plugins_dir.join(super::LEGACY_KILO_PLUGIN_INSTALL_NAME))?;
     let plugin_path = plugins_dir.join(KILO_PLUGIN_INSTALL_NAME);
     fs::write(&plugin_path, KILO_PLUGIN_ASSET)?;
 
@@ -502,6 +524,10 @@ pub(crate) fn install_hermes() -> io::Result<HermesInstallPaths> {
     }
 
     let plugin_dir = hermes_plugin_dir()?;
+    remove_dir_all_if_exists(
+        &dir.join("plugins")
+            .join(super::LEGACY_HERMES_PLUGIN_INSTALL_NAME),
+    )?;
     fs::create_dir_all(&plugin_dir)?;
     fs::write(
         plugin_dir.join(HERMES_PLUGIN_MANIFEST_INSTALL_NAME),
@@ -531,7 +557,10 @@ pub(crate) fn install_hermes() -> io::Result<HermesInstallPaths> {
 
 pub(crate) fn uninstall_pi() -> io::Result<PiUninstallResult> {
     let extension_path = pi_extension_dir()?.join(PI_EXTENSION_INSTALL_NAME);
-    let removed_extension = remove_file_if_exists(&extension_path)?;
+    let removed_extension = remove_file_if_exists(&extension_path)?
+        | remove_legacy_managed_file(
+            &pi_extension_dir()?.join(super::LEGACY_PI_EXTENSION_INSTALL_NAME),
+        )?;
 
     Ok(PiUninstallResult {
         extension_path,
@@ -541,7 +570,10 @@ pub(crate) fn uninstall_pi() -> io::Result<PiUninstallResult> {
 
 pub(crate) fn uninstall_omp() -> io::Result<OmpUninstallResult> {
     let extension_path = omp_extension_dir()?.join(OMP_EXTENSION_INSTALL_NAME);
-    let removed_extension = remove_file_if_exists(&extension_path)?;
+    let removed_extension = remove_file_if_exists(&extension_path)?
+        | remove_legacy_managed_file(
+            &omp_extension_dir()?.join(super::LEGACY_OMP_EXTENSION_INSTALL_NAME),
+        )?;
 
     Ok(OmpUninstallResult {
         extension_path,
@@ -819,8 +851,13 @@ pub(crate) fn uninstall_opencode() -> io::Result<OpenCodeUninstallResult> {
     let plugin_path = dir.join("plugins").join(OPENCODE_PLUGIN_INSTALL_NAME);
     let tui_plugin_path = dir.join(OPENCODE_TUI_PLUGIN_INSTALL_NAME);
     let mut errors = Vec::new();
-    let updated_tui_config =
+    let mut updated_tui_config =
         remove_tui_plugin(&dir, OPENCODE_TUI_PLUGIN_SPEC).unwrap_or_else(|err| {
+            errors.push(err.to_string());
+            false
+        });
+    updated_tui_config |= remove_tui_plugin(&dir, super::LEGACY_OPENCODE_TUI_PLUGIN_SPEC)
+        .unwrap_or_else(|err| {
             errors.push(err.to_string());
             false
         });
@@ -828,6 +865,17 @@ pub(crate) fn uninstall_opencode() -> io::Result<OpenCodeUninstallResult> {
         errors.push(format!("failed to remove {}: {err}", plugin_path.display()));
         false
     });
+    let legacy_plugin_path = dir
+        .join("plugins")
+        .join(super::LEGACY_OPENCODE_PLUGIN_INSTALL_NAME);
+    let removed_legacy_plugin =
+        remove_legacy_managed_file(&legacy_plugin_path).unwrap_or_else(|err| {
+            errors.push(format!(
+                "failed to remove {}: {err}",
+                legacy_plugin_path.display()
+            ));
+            false
+        });
     let removed_tui_plugin = remove_file_if_exists(&tui_plugin_path).unwrap_or_else(|err| {
         errors.push(format!(
             "failed to remove {}: {err}",
@@ -835,6 +883,15 @@ pub(crate) fn uninstall_opencode() -> io::Result<OpenCodeUninstallResult> {
         ));
         false
     });
+    let legacy_tui_plugin_path = dir.join(super::LEGACY_OPENCODE_TUI_PLUGIN_INSTALL_NAME);
+    let removed_legacy_tui_plugin = remove_legacy_managed_file(&legacy_tui_plugin_path)
+        .unwrap_or_else(|err| {
+            errors.push(format!(
+                "failed to remove {}: {err}",
+                legacy_tui_plugin_path.display()
+            ));
+            false
+        });
     if !errors.is_empty() {
         return Err(io::Error::other(errors.join("; ")));
     }
@@ -843,15 +900,17 @@ pub(crate) fn uninstall_opencode() -> io::Result<OpenCodeUninstallResult> {
         plugin_path,
         tui_plugin_path,
         tui_config_path,
-        removed_plugin,
-        removed_tui_plugin,
+        removed_plugin: removed_plugin || removed_legacy_plugin,
+        removed_tui_plugin: removed_tui_plugin || removed_legacy_tui_plugin,
         updated_tui_config,
     })
 }
 
 pub(crate) fn uninstall_kilo() -> io::Result<KiloUninstallResult> {
-    let plugin_path = kilo_dir()?.join("plugin").join(KILO_PLUGIN_INSTALL_NAME);
-    let removed_plugin = remove_file_if_exists(&plugin_path)?;
+    let plugin_dir = kilo_dir()?.join("plugin");
+    let plugin_path = plugin_dir.join(KILO_PLUGIN_INSTALL_NAME);
+    let removed_plugin = remove_file_if_exists(&plugin_path)?
+        | remove_legacy_managed_file(&plugin_dir.join(super::LEGACY_KILO_PLUGIN_INSTALL_NAME))?;
 
     Ok(KiloUninstallResult {
         plugin_path,
@@ -864,7 +923,11 @@ pub(crate) fn uninstall_hermes() -> io::Result<HermesUninstallResult> {
     let plugin_dir = hermes_plugin_dir()?;
     let config_path = dir.join("config.yaml");
 
-    let removed_plugin_dir = remove_dir_all_if_exists(&plugin_dir)?;
+    let removed_plugin_dir = remove_dir_all_if_exists(&plugin_dir)?
+        | remove_dir_all_if_exists(
+            &dir.join("plugins")
+                .join(super::LEGACY_HERMES_PLUGIN_INSTALL_NAME),
+        )?;
     let mut updated_config = false;
     if config_path.is_file() {
         let existing_config = fs::read_to_string(&config_path)?;
@@ -1040,14 +1103,20 @@ pub(crate) fn install_cursor() -> io::Result<CursorInstallPaths> {
         "cursor hooks file",
         "cursor hooks file hooks",
     )?;
-    let session_command = hook_command(&hook_path, Some("session"));
-    remove_simple_command_hook(hooks, "beforeSubmitPrompt", &session_command)?;
-    remove_simple_command_hook(hooks, "beforeShellExecution", &session_command)?;
-    remove_simple_command_hook(hooks, "beforeMCPExecution", &session_command)?;
-    remove_simple_command_hook(hooks, "stop", &session_command)?;
-    remove_simple_command_hook(hooks, "sessionEnd", &session_command)?;
-    ensure_simple_command_hook(hooks, "sessionStart", session_command)?;
+    for session_command in hook_command_variants(&hook_path, Some("session")) {
+        remove_simple_command_hook(hooks, "beforeSubmitPrompt", &session_command)?;
+        remove_simple_command_hook(hooks, "beforeShellExecution", &session_command)?;
+        remove_simple_command_hook(hooks, "beforeMCPExecution", &session_command)?;
+        remove_simple_command_hook(hooks, "stop", &session_command)?;
+        remove_simple_command_hook(hooks, "sessionEnd", &session_command)?;
+    }
+    ensure_simple_command_hook(
+        hooks,
+        "sessionStart",
+        hook_command(&hook_path, Some("session")),
+    )?;
 
+    remove_legacy_bash_hook_file(&hook_path)?;
     fs::write(&hooks_path, serde_json::to_string_pretty(&hooks_file)?)?;
 
     Ok(CursorInstallPaths {
@@ -1132,7 +1201,8 @@ pub(crate) fn uninstall_qwen() -> io::Result<QwenUninstallResult> {
         }
     }
 
-    let removed_hook_file = remove_file_if_exists(&hook_path)?;
+    let removed_hook_file =
+        remove_file_if_exists(&hook_path)? | remove_legacy_bash_hook_file(&hook_path)?;
 
     Ok(QwenUninstallResult {
         hook_path,
@@ -1160,16 +1230,18 @@ pub(crate) fn uninstall_cursor() -> io::Result<CursorUninstallResult> {
             "cursor hooks file",
             "cursor hooks file hooks",
         )? {
-            let session_command = hook_command(&hook_path, Some("session"));
-            updated_hooks |= remove_simple_command_hook(hooks, "sessionStart", &session_command)?;
-            updated_hooks |=
-                remove_simple_command_hook(hooks, "beforeSubmitPrompt", &session_command)?;
-            updated_hooks |=
-                remove_simple_command_hook(hooks, "beforeShellExecution", &session_command)?;
-            updated_hooks |=
-                remove_simple_command_hook(hooks, "beforeMCPExecution", &session_command)?;
-            updated_hooks |= remove_simple_command_hook(hooks, "stop", &session_command)?;
-            updated_hooks |= remove_simple_command_hook(hooks, "sessionEnd", &session_command)?;
+            for session_command in hook_command_variants(&hook_path, Some("session")) {
+                updated_hooks |=
+                    remove_simple_command_hook(hooks, "sessionStart", &session_command)?;
+                updated_hooks |=
+                    remove_simple_command_hook(hooks, "beforeSubmitPrompt", &session_command)?;
+                updated_hooks |=
+                    remove_simple_command_hook(hooks, "beforeShellExecution", &session_command)?;
+                updated_hooks |=
+                    remove_simple_command_hook(hooks, "beforeMCPExecution", &session_command)?;
+                updated_hooks |= remove_simple_command_hook(hooks, "stop", &session_command)?;
+                updated_hooks |= remove_simple_command_hook(hooks, "sessionEnd", &session_command)?;
+            }
         }
 
         if updated_hooks {
@@ -1177,7 +1249,8 @@ pub(crate) fn uninstall_cursor() -> io::Result<CursorUninstallResult> {
         }
     }
 
-    let removed_hook_file = remove_file_if_exists(&hook_path)?;
+    let removed_hook_file =
+        remove_file_if_exists(&hook_path)? | remove_legacy_bash_hook_file(&hook_path)?;
 
     Ok(CursorUninstallResult {
         hook_path,
@@ -1215,6 +1288,7 @@ pub(crate) fn install_mastracode() -> io::Result<MastracodeInstallPaths> {
     let hook_path = hook_dir.join(MASTRACODE_HOOK_INSTALL_NAME);
     fs::write(&hook_path, MASTRACODE_HOOK_ASSET)?;
     make_executable(&hook_path)?;
+    remove_legacy_bash_hook_file(&hook_path)?;
 
     let hooks_path = mastracode_home.join("hooks.json");
     let mut hooks_file = if hooks_path.is_file() {
@@ -1232,12 +1306,26 @@ pub(crate) fn install_mastracode() -> io::Result<MastracodeInstallPaths> {
         ))
     })?;
 
+    let legacy_hook_path = legacy_bash_hook_path(&hook_path);
     for (event, action) in MASTRACODE_REMOVED_HOOK_EVENTS {
-        remove_flat_command_hook(hooks, event, &hook_command(&hook_path, Some(action)))?;
-        remove_flat_command_hook(hooks, event, &mastracode_hook_command(&hook_path, action))?;
+        for command in hook_command_variants(&hook_path, Some(action)) {
+            remove_flat_command_hook(hooks, event, &command)?;
+        }
+        remove_flat_command_hook(
+            hooks,
+            event,
+            &mastracode_hook_command(&legacy_hook_path.with_extension("ps1"), action),
+        )?;
     }
     for (event, action) in MASTRACODE_HOOK_EVENTS {
-        remove_flat_command_hook(hooks, event, &hook_command(&hook_path, Some(action)))?;
+        for command in hook_command_variants(&hook_path, Some(action)) {
+            remove_flat_command_hook(hooks, event, &command)?;
+        }
+        remove_flat_command_hook(
+            hooks,
+            event,
+            &mastracode_hook_command(&legacy_hook_path.with_extension("ps1"), action),
+        )?;
         ensure_flat_command_hook(
             hooks,
             event,
@@ -1274,16 +1362,18 @@ pub(crate) fn uninstall_mastracode() -> io::Result<MastracodeUninstallResult> {
             ))
         })?;
 
+        let legacy_hook_path = legacy_bash_hook_path(&hook_path);
         for (event, action) in MASTRACODE_HOOK_EVENTS
             .into_iter()
             .chain(MASTRACODE_REMOVED_HOOK_EVENTS)
         {
-            updated_hooks |=
-                remove_flat_command_hook(hooks, event, &hook_command(&hook_path, Some(action)))?;
+            for command in hook_command_variants(&hook_path, Some(action)) {
+                updated_hooks |= remove_flat_command_hook(hooks, event, &command)?;
+            }
             updated_hooks |= remove_flat_command_hook(
                 hooks,
                 event,
-                &mastracode_hook_command(&hook_path, action),
+                &mastracode_hook_command(&legacy_hook_path.with_extension("ps1"), action),
             )?;
         }
 
@@ -1292,7 +1382,8 @@ pub(crate) fn uninstall_mastracode() -> io::Result<MastracodeUninstallResult> {
         }
     }
 
-    let removed_hook_file = remove_file_if_exists(&hook_path)?;
+    let removed_hook_file =
+        remove_file_if_exists(&hook_path)? | remove_legacy_bash_hook_file(&hook_path)?;
 
     Ok(MastracodeUninstallResult {
         hook_path,
@@ -1317,6 +1408,7 @@ pub(crate) fn install_antigravity_cli() -> io::Result<AntigravityCliInstallPaths
     let hook_path = hooks_dir.join(ANTIGRAVITY_CLI_HOOK_INSTALL_NAME);
     fs::write(&hook_path, ANTIGRAVITY_CLI_HOOK_ASSET)?;
     make_executable(&hook_path)?;
+    remove_legacy_bash_hook_file(&hook_path)?;
 
     let hooks_path = dir.join("hooks.json");
     let mut hooks_file = if hooks_path.is_file() {
@@ -1329,12 +1421,13 @@ pub(crate) fn install_antigravity_cli() -> io::Result<AntigravityCliInstallPaths
 
     let hooks = hooks_file.as_object_mut().ok_or_else(|| {
         io::Error::other(format!(
-            "antigravity cli hooks file at {} must be a JSON object",
+            "antigravity innov hooks file at {} must be a JSON object",
             hooks_path.display()
         ))
     })?;
 
-    // The Herdr block is Herdr-owned, so rewrite it wholesale and leave every
+    hooks.remove(LEGACY_ANTIGRAVITY_CLI_HOOK_BLOCK_NAME);
+    // The Innov block is Innov-owned, so rewrite it wholesale and leave every
     // other named hook untouched.
     hooks.insert(
         ANTIGRAVITY_CLI_HOOK_BLOCK_NAME.to_string(),
@@ -1349,10 +1442,10 @@ pub(crate) fn install_antigravity_cli() -> io::Result<AntigravityCliInstallPaths
     })
 }
 
-/// Builds the Herdr-owned `hooks.json` block for Antigravity CLI.
+/// Builds the Innov-owned `hooks.json` block for Antigravity CLI.
 ///
-/// Every event Herdr registers takes a flat handler list; the `matcher`/`hooks`
-/// group is only valid for the tool events, which Herdr does not use.
+/// Every event Innov registers takes a flat handler list; the `matcher`/`hooks`
+/// group is only valid for the tool events, which Innov does not use.
 fn antigravity_cli_hook_block(hook_path: &Path) -> Value {
     let mut block = Map::new();
     for (event, action) in ANTIGRAVITY_CLI_HOOK_EVENTS {
@@ -1380,19 +1473,23 @@ pub(crate) fn uninstall_antigravity_cli() -> io::Result<AntigravityCliUninstallR
 
         let hooks = hooks_file.as_object_mut().ok_or_else(|| {
             io::Error::other(format!(
-                "antigravity cli hooks file at {} must be a JSON object",
+                "antigravity innov hooks file at {} must be a JSON object",
                 hooks_path.display()
             ))
         })?;
 
-        updated_hooks = hooks.remove(ANTIGRAVITY_CLI_HOOK_BLOCK_NAME).is_some();
+        updated_hooks = hooks.remove(ANTIGRAVITY_CLI_HOOK_BLOCK_NAME).is_some()
+            || hooks
+                .remove(LEGACY_ANTIGRAVITY_CLI_HOOK_BLOCK_NAME)
+                .is_some();
 
         if updated_hooks {
             fs::write(&hooks_path, serde_json::to_string_pretty(&hooks_file)?)?;
         }
     }
 
-    let removed_hook_file = remove_file_if_exists(&hook_path)?;
+    let removed_hook_file =
+        remove_file_if_exists(&hook_path)? | remove_legacy_bash_hook_file(&hook_path)?;
 
     Ok(AntigravityCliUninstallResult {
         hook_path,
@@ -1402,7 +1499,7 @@ pub(crate) fn uninstall_antigravity_cli() -> io::Result<AntigravityCliUninstallR
     })
 }
 
-/// The complete Herdr-owned Grok hook config. Installation and status share
+/// The complete Innov-owned Grok hook config. Installation and status share
 /// this value so any config drift is reported as outdated.
 fn grok_hook_command(hook_path: &Path) -> String {
     #[cfg(windows)]
@@ -1446,7 +1543,7 @@ pub(crate) fn install_grok() -> io::Result<GrokInstallPaths> {
         )));
     }
 
-    // Grok merges every `~/.grok/hooks/*.json`, so herdr owns a dedicated
+    // Grok merges every `~/.grok/hooks/*.json`, so innov owns a dedicated
     // config file and never edits the user's other hooks. The hook script and
     // its config live side by side under `hooks/`.
     let hooks_dir = dir.join("hooks");
@@ -1455,6 +1552,8 @@ pub(crate) fn install_grok() -> io::Result<GrokInstallPaths> {
     let hook_path = hooks_dir.join(GROK_HOOK_INSTALL_NAME);
     fs::write(&hook_path, GROK_HOOK_ASSET)?;
     make_executable(&hook_path)?;
+    remove_legacy_bash_hook_file(&hook_path)?;
+    remove_file_if_exists(&hooks_dir.join(LEGACY_GROK_HOOK_CONFIG_INSTALL_NAME))?;
 
     let config_path = hooks_dir.join(GROK_HOOK_CONFIG_INSTALL_NAME);
     fs::write(
@@ -1473,9 +1572,11 @@ pub(crate) fn uninstall_grok() -> io::Result<GrokUninstallResult> {
     let hook_path = hooks_dir.join(GROK_HOOK_INSTALL_NAME);
     let config_path = hooks_dir.join(GROK_HOOK_CONFIG_INSTALL_NAME);
 
-    // herdr owns both files outright, so removal is a straight delete.
-    let removed_config_file = remove_file_if_exists(&config_path)?;
-    let removed_hook_file = remove_file_if_exists(&hook_path)?;
+    // innov owns both files outright, so removal is a straight delete.
+    let removed_config_file = remove_file_if_exists(&config_path)?
+        | remove_file_if_exists(&hooks_dir.join(LEGACY_GROK_HOOK_CONFIG_INSTALL_NAME))?;
+    let removed_hook_file =
+        remove_file_if_exists(&hook_path)? | remove_legacy_bash_hook_file(&hook_path)?;
 
     Ok(GrokUninstallResult {
         hook_path,

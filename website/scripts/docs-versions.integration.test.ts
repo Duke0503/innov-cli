@@ -14,7 +14,7 @@ afterEach(async () => {
 
 describe('documentation release publishing', () => {
   test('snapshots tagged next docs and switches stable to generated snapshots', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'herdr-docs-'));
+    const root = await mkdtemp(join(tmpdir(), 'innov-docs-'));
     temporaryDirectories.push(root);
     await write(root, 'website/src/content/docs/index.mdx', 'stable docs\n');
     await write(root, 'website/src/data/config-reference.json', '{"stable":true}\n');
@@ -69,7 +69,7 @@ describe('documentation release publishing', () => {
     const stableDocs = await read(root, 'website/src/content/docs/index.mdx');
     expect(stableDocs).toContain('next docs');
     expect(stableDocs).toContain(
-      'editUrl: https://github.com/herdrdev/herdr/blob/master/docs/versions/1.0.0/website/src/content/docs/index.mdx',
+      'editUrl: https://github.com/Duke0503/cli/blob/main/docs/versions/1.0.0/website/src/content/docs/index.mdx',
     );
     const versionedDocs = await read(
       root,
@@ -77,7 +77,7 @@ describe('documentation release publishing', () => {
     );
     expect(versionedDocs).toContain('next docs');
     expect(versionedDocs).toContain(
-      'editUrl: https://github.com/herdrdev/herdr/blob/master/docs/versions/1.0.0/website/src/content/docs/index.mdx',
+      'editUrl: https://github.com/Duke0503/cli/blob/main/docs/versions/1.0.0/website/src/content/docs/index.mdx',
     );
     expect(await read(root, 'website/src/content/docs/preview/index.mdx')).toContain(
       'Preview build `preview-test`',
@@ -177,7 +177,7 @@ function git(root: string, args: string[]) {
 function runScript(root: string, args: string[]) {
   execFileSync('node', [script, ...args], {
     cwd: root,
-    env: { ...process.env, HERDR_DOCS_REPO_ROOT: root },
+    env: { ...process.env, INNOV_DOCS_REPO_ROOT: root },
     stdio: 'pipe',
   });
 }
@@ -185,7 +185,7 @@ function runScript(root: string, args: string[]) {
 function runPrepare(root: string) {
   execFileSync('node', [prepareScript, '--docs-only'], {
     cwd: root,
-    env: { ...process.env, HERDR_DOCS_REPO_ROOT: root },
+    env: { ...process.env, INNOV_DOCS_REPO_ROOT: root },
     stdio: 'pipe',
   });
 }

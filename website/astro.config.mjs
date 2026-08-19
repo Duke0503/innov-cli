@@ -3,10 +3,10 @@ import sitemap from '@astrojs/sitemap';
 import starlight from '@astrojs/starlight';
 import starlightLlmsTxt from 'starlight-llms-txt';
 
-const repoBlob = 'https://github.com/herdrdev/herdr/blob/master/';
+const repoBlob = 'https://github.com/Duke0503/cli/blob/main/';
 const nonCanonicalDocsPath = /^\/(?:ja\/|zh-cn\/)?docs\/(?:preview|\d+\.\d+\.\d+)(?:\/|$)/;
 
-function rewriteHerdrLinks() {
+function rewriteInnovLinks() {
   const docsLinks = new Map([
     ['README.md', '/docs/'],
     ['./README.md', '/docs/'],
@@ -51,7 +51,7 @@ function walk(node, visitor) {
 }
 
 export default defineConfig({
-  site: 'https://herdr.dev',
+  site: 'https://innov.dev',
   redirects: {
     '/ja': '/ja/docs/',
     '/zh-cn': '/zh-cn/docs/',
@@ -69,7 +69,7 @@ export default defineConfig({
       },
     }),
     starlight({
-      title: 'herdr',
+      title: 'innov',
       description: 'Terminal-native agent runtime and multiplexer.',
       favicon: '/assets/favicon.png?v=14',
       defaultLocale: 'root',
@@ -82,7 +82,7 @@ export default defineConfig({
         {
           icon: 'github',
           label: 'GitHub',
-          href: 'https://github.com/herdrdev/herdr',
+          href: 'https://github.com/Duke0503/cli',
         },
       ],
       components: {
@@ -95,15 +95,15 @@ export default defineConfig({
       },
       plugins: [
         starlightLlmsTxt({
-          projectName: 'Herdr',
+          projectName: 'Innov',
           description: 'Terminal workspace manager and runtime for AI coding agents.',
-          details: 'These files document the current stable Herdr release. Preview and archived release documentation are intentionally excluded.',
+          details: 'These files document the current stable Innov release. Preview and archived release documentation are intentionally excluded.',
           exclude: ['docs/preview{,/**}', 'docs/+([0-9]).+([0-9]).+([0-9]){,/**}'],
           optionalLinks: [
             {
               label: 'Agent guide',
-              url: 'https://herdr.dev/agent-guide.md',
-              description: 'help a human understand, set up, or troubleshoot Herdr',
+              url: 'https://innov.dev/agent-guide.md',
+              description: 'help a human understand, set up, or troubleshoot Innov',
             },
           ],
         }),
@@ -130,7 +130,7 @@ export default defineConfig({
           tag: 'script',
           content: `(function () {
   try {
-    var KEY = 'herdr-docs-lang';
+    var KEY = 'innov-docs-lang';
     var path = location.pathname;
     var m = path.match(/^\\/(ja|zh-cn)(?=\\/|$)/);
     var current = m ? m[1] : path.indexOf('/docs') === 0 ? 'en' : null;
@@ -156,7 +156,7 @@ export default defineConfig({
         },
         {
           tag: 'meta',
-          attrs: { property: 'og:image', content: 'https://herdr.dev/assets/og-card-v9.png' },
+          attrs: { property: 'og:image', content: 'https://innov.dev/assets/og-card-v9.png' },
         },
         { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
         { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
@@ -164,23 +164,23 @@ export default defineConfig({
           tag: 'meta',
           attrs: {
             property: 'og:image:alt',
-            content: 'Herdr documentation — run them anywhere, leave them running.',
+            content: 'Innov documentation — run them anywhere, leave them running.',
           },
         },
         {
           tag: 'meta',
-          attrs: { name: 'twitter:image', content: 'https://herdr.dev/assets/og-card-v9.png' },
+          attrs: { name: 'twitter:image', content: 'https://innov.dev/assets/og-card-v9.png' },
         },
         {
           tag: 'meta',
           attrs: {
             name: 'twitter:image:alt',
-            content: 'Herdr documentation — run them anywhere, leave them running.',
+            content: 'Innov documentation — run them anywhere, leave them running.',
           },
         },
       ],
       editLink: {
-        baseUrl: 'https://github.com/herdrdev/herdr/edit/master/',
+        baseUrl: 'https://github.com/Duke0503/cli/edit/main/',
       },
       lastUpdated: true,
       disable404Route: true,
@@ -197,10 +197,10 @@ export default defineConfig({
           ],
         },
         {
-          label: 'Using Herdr',
-          translations: { ja: 'Herdr を使う', 'zh-CN': '使用 Herdr' },
+          label: 'Using Innov',
+          translations: { ja: 'Innov を使う', 'zh-CN': '使用 Innov' },
           items: [
-            { label: 'How to work with Herdr', translations: { ja: 'Herdr での作業の進め方', 'zh-CN': '使用 Herdr 的工作方式' }, slug: 'docs/how-to-work' },
+            { label: 'How to work with Innov', translations: { ja: 'Innov での作業の進め方', 'zh-CN': '使用 Innov 的工作方式' }, slug: 'docs/how-to-work' },
             { label: 'Agents', translations: { ja: 'エージェント', 'zh-CN': '智能体' }, slug: 'docs/agents' },
             { label: 'Agent automation', translations: { ja: 'エージェント自動化', 'zh-CN': '智能体自动化' }, slug: 'docs/agent-automation' },
             { label: 'Session state and restore', translations: { ja: 'セッション状態と復元', 'zh-CN': '会话状态与恢复' }, slug: 'docs/session-state' },
@@ -240,6 +240,6 @@ export default defineConfig({
     }),
   ],
   markdown: {
-    remarkPlugins: [rewriteHerdrLinks],
+    remarkPlugins: [rewriteInnovLinks],
   },
 });

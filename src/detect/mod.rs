@@ -677,7 +677,7 @@ mod tests {
     #[cfg(unix)]
     fn temp_detection_path(name: &str) -> std::path::PathBuf {
         let unique = format!(
-            "herdr-detect-tests-{}-{}-{}",
+            "innov-detect-tests-{}-{}-{}",
             name,
             std::process::id(),
             std::time::SystemTime::now()
@@ -1025,7 +1025,7 @@ mod tests {
                 "node.exe",
                 &[
                     "node.exe",
-                    "C:\\Users\\herdr\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\cli.js",
+                    "C:\\Users\\innov\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\cli.js",
                 ],
             )],
         };
@@ -1045,7 +1045,7 @@ mod tests {
                 "node.exe",
                 &[
                     "node.exe",
-                    "C:\\Users\\herdr\\AppData\\Roaming\\npm\\node_modules\\mastracode\\dist\\cli.js",
+                    "C:\\Users\\innov\\AppData\\Roaming\\npm\\node_modules\\mastracode\\dist\\cli.js",
                 ],
             )],
         };
@@ -1065,7 +1065,7 @@ mod tests {
                 "node.exe",
                 &[
                     "node.exe",
-                    "C:\\Users\\herdr\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\scripts\\build.js",
+                    "C:\\Users\\innov\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\scripts\\build.js",
                 ],
             )],
         };
@@ -1085,7 +1085,7 @@ mod tests {
                     "/D",
                     "/S",
                     "/C",
-                    "C:\\Users\\herdr\\AppData\\Roaming\\npm\\codex.cmd --model gpt-5",
+                    "C:\\Users\\innov\\AppData\\Roaming\\npm\\codex.cmd --model gpt-5",
                 ],
             )],
         };
@@ -1107,7 +1107,7 @@ mod tests {
                     "powershell.exe",
                     "-NoProfile",
                     "-File",
-                    "C:\\Users\\herdr\\Documents\\PowerShell\\Scripts\\claude.ps1",
+                    "C:\\Users\\innov\\Documents\\PowerShell\\Scripts\\claude.ps1",
                 ],
             )],
         };
@@ -1118,11 +1118,11 @@ mod tests {
         );
     }
 
-    // A plain shell pane launched with herdr's injected prompt integration
+    // A plain shell pane launched with innov's injected prompt integration
     // must still classify as a shell, not an agent, even though its argv now
     // carries a -Command payload.
     #[test]
-    fn identify_agent_in_job_ignores_herdr_powershell_shell_integration_argv() {
+    fn identify_agent_in_job_ignores_innov_powershell_shell_integration_argv() {
         let job = crate::platform::ForegroundJob {
             process_group_id: 123,
             processes: vec![foreground_process(

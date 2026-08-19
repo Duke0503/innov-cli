@@ -1,6 +1,6 @@
-//! Auto-detect launch behavior for the `herdr` command.
+//! Auto-detect launch behavior for the `innov` command.
 //!
-//! When the user runs `herdr` with no subcommand:
+//! When the user runs `innov` with no subcommand:
 //! 1. Check if a server is already listening on the client socket
 //! 2. If no server → spawn one as a background daemon → wait for socket readiness (up to 15s)
 //! 3. Attach as a thin client to the server
@@ -29,14 +29,14 @@ const SOCKET_POLL_INTERVAL: Duration = Duration::from_millis(50);
 const STATUS_REQUEST_TIMEOUT: Duration = Duration::from_secs(2);
 
 /// Private daemon-start hint used to seed a fresh headless server from the
-/// directory where the user ran `herdr`.
-pub(crate) const STARTUP_CWD_ENV_VAR: &str = "HERDR_STARTUP_CWD";
+/// directory where the user ran `innov`.
+pub(crate) const STARTUP_CWD_ENV_VAR: &str = "INNOV_STARTUP_CWD";
 
 // ---------------------------------------------------------------------------
 // Server detection
 // ---------------------------------------------------------------------------
 
-/// Checks whether a herdr server is currently listening on the client socket.
+/// Checks whether a innov server is currently listening on the client socket.
 ///
 /// This works by attempting to connect to the client socket. If the connection
 /// succeeds, a server is running. If the socket file doesn't exist or the
@@ -48,7 +48,7 @@ pub fn is_server_listening() -> bool {
     is_server_listening_at(&client_socket_path())
 }
 
-/// Checks whether a herdr server is listening at a specific socket path.
+/// Checks whether a innov server is listening at a specific socket path.
 fn is_server_listening_at(socket_path: &Path) -> bool {
     #[cfg(windows)]
     {
@@ -150,7 +150,7 @@ fn client_protocol_accepts_hello(socket_path: &Path) -> io::Result<bool> {
 fn validate_running_server_compatibility() -> io::Result<()> {
     let Some(status) = read_server_status()? else {
         return Err(io::Error::other(format!(
-            "a herdr server is listening, but its status API is unavailable.\n\n{}\nIf that fails, stop the old server process manually.",
+            "a innov server is listening, but its status API is unavailable.\n\n{}\nIf that fails, stop the old server process manually.",
             crate::session::active_restart_after_update_guidance()
         )));
     };
@@ -176,12 +176,12 @@ fn validate_running_server_compatibility() -> io::Result<()> {
 // Server spawning
 // ---------------------------------------------------------------------------
 
-/// Spawns the herdr server as a background daemon process.
+/// Spawns the innov server as a background daemon process.
 ///
 /// The server process is fully detached:
 /// - Runs in its own session (setsid) so it survives the client exiting
 /// - Stdin/stdout/stderr are redirected to /dev/null
-/// - Inherits relevant environment variables (`XDG_CONFIG_HOME`, `HERDR_SESSION`,
+/// - Inherits relevant environment variables (`XDG_CONFIG_HOME`, `INNOV_SESSION`,
 ///   socket overrides, etc.), except inherited socket overrides are cleared when
 ///   this CLI invocation explicitly selected a session.
 ///
@@ -190,7 +190,7 @@ pub fn spawn_server_daemon() -> io::Result<u32> {
     let exe = std::env::current_exe().map_err(|err| {
         io::Error::new(
             err.kind(),
-            format!("failed to determine herdr executable path: {err}"),
+            format!("failed to determine innov executable path: {err}"),
         )
     })?;
 
@@ -200,7 +200,7 @@ pub fn spawn_server_daemon() -> io::Result<u32> {
 
     let pid =
         crate::platform::launch_server_daemon_command(&mut command).map_err(|err: io::Error| {
-            io::Error::new(err.kind(), format!("failed to spawn herdr server: {err}"))
+            io::Error::new(err.kind(), format!("failed to spawn innov server: {err}"))
         })?;
     info!(pid, "server daemon spawned");
 
@@ -230,6 +230,12 @@ fn build_server_daemon_command(exe: PathBuf) -> Command {
         command
             .env_remove(crate::api::SOCKET_PATH_ENV_VAR)
             .env_remove(CLIENT_SOCKET_PATH_ENV_VAR);
+        for legacy_var in crate::api::LEGACY_SOCKET_PATH_ENV_VARS {
+            command.env_remove(legacy_var);
+        }
+        for legacy_var in crate::server::socket_paths::LEGACY_CLIENT_SOCKET_PATH_ENV_VARS {
+            command.env_remove(legacy_var);
+        }
     }
 
     command
@@ -265,10 +271,10 @@ pub fn wait_for_server_socket(socket_path: &Path, timeout: Duration) -> io::Resu
     Err(io::Error::new(
         io::ErrorKind::TimedOut,
         format!(
-            "server did not become ready within {}s (socket: {}). The background server may still be starting; try `herdr` again, or check {}",
+            "server did not become ready within {}s (socket: {}). The background server may still be starting; try `innov` again, or check {}",
             timeout.as_secs(),
             socket_path.display(),
-            crate::session::data_dir().join("herdr-server.log").display()
+            crate::session::data_dir().join("innov-server.log").display()
         ),
     ))
 }
@@ -280,7 +286,7 @@ pub fn wait_for_server_socket(socket_path: &Path, timeout: Duration) -> io::Resu
 /// Performs auto-detect launch: check for server, spawn if needed, then
 /// attach as a thin client.
 ///
-/// This is the entry point called from `main.rs` when the user runs `herdr`
+/// This is the entry point called from `main.rs` when the user runs `innov`
 /// without `--no-session` and without a subcommand.
 ///
 /// Flow:
@@ -345,13 +351,13 @@ mod tests {
         std::env::remove_var(crate::session::SESSION_ENV_VAR);
         crate::session::clear_explicit_session_for_test();
         let args = vec![
-            "herdr".to_string(),
+            "innov".to_string(),
             "--session".to_string(),
             "work".to_string(),
         ];
         crate::session::configure_from_args(&args).unwrap();
 
-        let command = build_server_daemon_command(PathBuf::from("/tmp/herdr-test"));
+        let command = build_server_daemon_command(PathBuf::from("/tmp/innov-test"));
         let envs: Vec<_> = command.get_envs().collect();
 
         assert!(envs.iter().any(|(key, value)| {
@@ -369,7 +375,7 @@ mod tests {
     #[test]
     fn server_daemon_command_passes_current_dir_as_startup_cwd() {
         let expected = std::env::current_dir().unwrap();
-        let command = build_server_daemon_command(PathBuf::from("/tmp/herdr-test"));
+        let command = build_server_daemon_command(PathBuf::from("/tmp/innov-test"));
         let envs: Vec<_> = command.get_envs().collect();
 
         assert!(envs.iter().any(|(key, value)| {
@@ -569,11 +575,11 @@ test "$sid" = "$$"
             "unexpected error: {message}"
         );
         assert!(
-            message.contains("Run `cli session stop work`"),
+            message.contains("Run `innov session stop work`"),
             "unexpected error: {message}"
         );
         assert!(
-            message.contains("then run `cli session attach work` again"),
+            message.contains("then run `innov session attach work` again"),
             "unexpected error: {message}"
         );
         std::env::remove_var("XDG_CONFIG_HOME");

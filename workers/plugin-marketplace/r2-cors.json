@@ -2,7 +2,7 @@
   "rules": [
     {
       "allowed": {
-        "origins": ["https://herdr.dev"],
+        "origins": ["https://innov.dev"],
         "methods": ["GET", "HEAD"],
         "headers": ["*"]
       },

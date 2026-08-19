@@ -370,7 +370,7 @@ pub(crate) fn integration_update_instructions(
         .iter()
         .map(|target| {
             format!(
-                "`herdr integration install {}`",
+                "`innov integration install {}`",
                 integration_target_label(*target)
             )
         })
@@ -394,13 +394,13 @@ pub(crate) fn print_outdated_update_notice() -> bool {
         .map(|integration| integration.target)
         .collect::<Vec<_>>();
     eprintln!(
-        "installed herdr integrations need updating; {}.",
+        "installed innov integrations need updating; {}.",
         integration_update_instructions(&targets).replace('`', "")
     );
     true
 }
 
-/// Whether the Herdr-owned Grok hook config exactly matches the installed
+/// Whether the Innov-owned Grok hook config exactly matches the installed
 /// integration. JSON formatting and object key order do not affect validity.
 fn grok_hook_config_is_valid(hook_path: &Path) -> bool {
     let Some(hooks_dir) = hook_path.parent() else {
@@ -453,9 +453,9 @@ pub(crate) fn integration_status_at(
         super::IntegrationStatusKind::Outdated
     };
 
-    // Grok only invokes the hook when the herdr-owned `hooks/herdr.json`
+    // Grok only invokes the hook when the innov-owned `hooks/innov.json`
     // registers it, so a current hook script with a missing or broken config
-    // is a nonfunctional install: report it as outdated so `herdr integration
+    // is a nonfunctional install: report it as outdated so `innov integration
     // status` flags it and a reinstall rewrites both files.
     if target == crate::api::schema::IntegrationTarget::Grok
         && state == super::IntegrationStatusKind::Current
@@ -487,7 +487,8 @@ pub(crate) fn parse_integration_version(content: &str) -> Option<u32> {
             .trim_start_matches('#')
             .trim();
         marker_line
-            .strip_prefix(super::INTEGRATION_VERSION_MARKER)?
+            .strip_prefix(super::INTEGRATION_VERSION_MARKER)
+            .or_else(|| marker_line.strip_prefix(super::LEGACY_INTEGRATION_VERSION_MARKER))?
             .trim()
             .parse()
             .ok()

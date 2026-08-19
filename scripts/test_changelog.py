@@ -36,7 +36,7 @@ def release_sha256() -> dict[str, str]:
 def release_assets_with_digests() -> list[dict[str, str]]:
     return [
         {
-            "name": f"herdr-{target}",
+            "name": f"innov-{target}",
             "url": f"https://example.com/{target}",
             "digest": f"sha256:{digest * 64}",
         }
@@ -103,10 +103,10 @@ class ChangelogScriptTests(unittest.TestCase):
         self.assertEqual(
             manifest["assets"],
             {
-                "linux-x86_64": "https://github.com/herdrdev/herdr/releases/download/v0.1.1/herdr-linux-x86_64",
-                "linux-aarch64": "https://github.com/herdrdev/herdr/releases/download/v0.1.1/herdr-linux-aarch64",
-                "macos-x86_64": "https://github.com/herdrdev/herdr/releases/download/v0.1.1/herdr-macos-x86_64",
-                "macos-aarch64": "https://github.com/herdrdev/herdr/releases/download/v0.1.1/herdr-macos-aarch64",
+                "linux-x86_64": "https://github.com/Duke0503/cli/releases/download/v0.1.1/innov-linux-x86_64",
+                "linux-aarch64": "https://github.com/Duke0503/cli/releases/download/v0.1.1/innov-linux-aarch64",
+                "macos-x86_64": "https://github.com/Duke0503/cli/releases/download/v0.1.1/innov-macos-x86_64",
+                "macos-aarch64": "https://github.com/Duke0503/cli/releases/download/v0.1.1/innov-macos-aarch64",
             },
         )
         self.assertEqual(manifest["releases"]["0.1.1"]["assets"], manifest["assets"])
@@ -285,7 +285,7 @@ class ChangelogScriptTests(unittest.TestCase):
             path.unlink(missing_ok=True)
 
     def test_load_product_announcement_rejects_missing_file(self) -> None:
-        path = Path(tempfile.gettempdir()) / "herdr-missing-product-announcement.json"
+        path = Path(tempfile.gettempdir()) / "innov-missing-product-announcement.json"
         path.unlink(missing_ok=True)
         with self.assertRaisesRegex(ChangelogError, "file not found"):
             load_product_announcement(path)
@@ -374,7 +374,7 @@ class ChangelogScriptTests(unittest.TestCase):
             )
 
     def test_manifest_from_release_payload_rejects_missing_asset(self) -> None:
-        with self.assertRaisesRegex(ChangelogError, "missing asset herdr-macos-aarch64"):
+        with self.assertRaisesRegex(ChangelogError, "missing asset innov-macos-aarch64"):
             manifest_from_release_payload(
                 {
                     "tagName": "v0.1.1",
@@ -382,9 +382,9 @@ class ChangelogScriptTests(unittest.TestCase):
                     "isPrerelease": False,
                     "body": "### Fixed\n- One\n",
                     "assets": [
-                        {"name": "herdr-linux-x86_64", "url": "https://example.com/linux-x86_64"},
-                        {"name": "herdr-linux-aarch64", "url": "https://example.com/linux-aarch64"},
-                        {"name": "herdr-macos-x86_64", "url": "https://example.com/macos-x86_64"},
+                        {"name": "innov-linux-x86_64", "url": "https://example.com/linux-x86_64"},
+                        {"name": "innov-linux-aarch64", "url": "https://example.com/linux-aarch64"},
+                        {"name": "innov-macos-x86_64", "url": "https://example.com/macos-x86_64"},
                     ],
                 },
                 "0.1.1",

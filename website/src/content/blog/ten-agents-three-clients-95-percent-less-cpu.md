@@ -1,12 +1,12 @@
 ---
 title: Ten agents, three clients, 95% less CPU
-description: Herdr stopped animating its sidebar, drawing hidden panes, and repainting unchanged frames during mouse movement. The busiest sessions gained the most.
+description: Innov stopped animating its sidebar, drawing hidden panes, and repainting unchanged frames during mouse movement. The busiest sessions gained the most.
 date: 2026-08-03
 ogImage: /assets/og-blog-frames-v1.png
 draft: false
 ---
 
-In workloads dominated by unnecessary rendering, total CPU for the Herdr server and its attached clients fell by 89 to 95 percent. The renderer still runs at the same speed. Herdr now asks it to draw fewer frames.
+In workloads dominated by unnecessary rendering, total CPU for the Innov server and its attached clients fell by 89 to 95 percent. The renderer still runs at the same speed. Innov now asks it to draw fewer frames.
 
 The savings grow with the session. With one agent and one client, total CPU fell 91 percent. With ten agents producing background output and three clients, it fell 95 percent. Every frame the server skips is also one less frame to serialize, transmit, and apply in each client.
 
@@ -14,7 +14,7 @@ We found all three changes without a profiler. The first started as a complaint 
 
 ## The spinner was a complaint before it was a cost
 
-Herdr's job is to tell you which agent needs you. You run five, ten, twenty of them, and the sidebar is how you know where to look.
+Innov's job is to tell you which agent needs you. You run five, ten, twenty of them, and the sidebar is how you know where to look.
 
 So every working agent got a spinner. It seemed obvious at the time. Motion means alive, and an agent that is thinking should look like it is thinking.
 
@@ -26,7 +26,7 @@ The first fix isolated spinner redraws to the status rectangle. Instead of rebui
   <div class="pf-2">
     <div class="pf-panel">
       <div class="pf-label"><span>0.7.5</span><b>3 spinners, 8fps</b></div>
-      <div class="pf-row working"><span class="pf-mark pf-spin"><i>⠋</i><i>⠙</i><i>⠹</i><i>⠸</i></span><div><strong>herdr</strong><small>working</small></div></div>
+      <div class="pf-row working"><span class="pf-mark pf-spin"><i>⠋</i><i>⠙</i><i>⠹</i><i>⠸</i></span><div><strong>innov</strong><small>working</small></div></div>
       <div class="pf-row working"><span class="pf-mark pf-spin"><i>⠋</i><i>⠙</i><i>⠹</i><i>⠸</i></span><div><strong>web-dashboard</strong><small>working</small></div></div>
       <div class="pf-row blocked"><span class="pf-mark">◉</span><div><strong>llm-proxy</strong><small>blocked, needs you</small></div></div>
       <div class="pf-row working"><span class="pf-mark pf-spin"><i>⠋</i><i>⠙</i><i>⠹</i><i>⠸</i></span><div><strong>data-pipeline</strong><small>working</small></div></div>
@@ -34,7 +34,7 @@ The first fix isolated spinner redraws to the status rectangle. Instead of rebui
     </div>
     <div class="pf-panel">
       <div class="pf-label"><span>0.8.0</span><b>nothing moves</b></div>
-      <div class="pf-row working"><span class="pf-mark">●</span><div><strong>herdr</strong><small>working</small></div></div>
+      <div class="pf-row working"><span class="pf-mark">●</span><div><strong>innov</strong><small>working</small></div></div>
       <div class="pf-row working"><span class="pf-mark">●</span><div><strong>web-dashboard</strong><small>working</small></div></div>
       <div class="pf-row blocked"><span class="pf-mark">◉</span><div><strong>llm-proxy</strong><small>blocked, needs you</small></div></div>
       <div class="pf-row working"><span class="pf-mark">●</span><div><strong>data-pipeline</strong><small>working</small></div></div>
@@ -86,13 +86,13 @@ When a pane produced output, the PTY reader set a shared flag to say something h
   <figcaption class="pf-cap">Render requests now carry their source. Writes from one pane coalesce into a single entry, while simultaneous writes from different panes each keep their identity.</figcaption>
 </figure>
 
-Skipping the render does not drop output. The bytes have already been parsed, so terminal state, scrollback, cursor, OSC metadata and agent detection all stay current. Switching to that tab renders from the current state. Where the mapping is unknown, Herdr treats the pane as visible, because a wrong skip leaves a stale screen while a wrong render only costs some CPU.
+Skipping the render does not drop output. The bytes have already been parsed, so terminal state, scrollback, cursor, OSC metadata and agent detection all stay current. Switching to that tab renders from the current state. Where the mapping is unknown, Innov treats the pane as visible, because a wrong skip leaves a stale screen while a wrong render only costs some CPU.
 
 ## Mouse movement should not redraw an unchanged frame
 
-Every mouse event reported that the view had changed. Pointer movement over a pane is forwarded to the application inside it, but Herdr's own frame is usually identical before and after. At 60 motion events per second, that meant roughly 60 server renders and 60 client frames per second, to draw the same picture sixty times.
+Every mouse event reported that the view had changed. Pointer movement over a pane is forwarded to the application inside it, but Innov's own frame is usually identical before and after. At 60 motion events per second, that meant roughly 60 server renders and 60 client frames per second, to draw the same picture sixty times.
 
-Herdr now tracks which of its own modes respond to hover: the global menu, context menus and the navigator. Outside those modes, movement alone repaints nothing. The events still reach the pane exactly as before.
+Innov now tracks which of its own modes respond to hover: the global menu, context menus and the navigator. Outside those modes, movement alone repaints nothing. The events still reach the pane exactly as before.
 
 The benchmark counted both ends. In every measured round, on both builds, 1,680 motion packets were sent and all 1,680 arrived in the pane. Version 0.7.5 emitted around 56 to 60 frames per second doing it. Master emitted none. Linux CPU fell from 9.450 percent to 0.667.
 
@@ -148,10 +148,10 @@ The optimization targets unnecessary rendering. Output-heavy cases remain domina
 
 ## How this was measured
 
-We compared official 0.7.5 release binaries with hashed master builds on separate Linux and macOS machines, giving 54 isolated observations per operating system. Every run used a fresh named session, real attached clients in fixed 86 by 47 terminals, a five-second warmup and twenty-one-second samples. The figures show total CPU for the Herdr server plus every attached client.
+We compared official 0.7.5 release binaries with hashed master builds on separate Linux and macOS machines, giving 54 isolated observations per operating system. Every run used a fresh named session, real attached clients in fixed 86 by 47 terminals, a five-second warmup and twenty-one-second samples. The figures show total CPU for the Innov server plus every attached client.
 
 We paired every headline CPU result with a behavioural counter: scheduled frames per second for the sidebar, hidden-source skips for background output, and exact packet delivery counts for mouse motion. A CPU number on its own can be explained by a dozen things. A CPU number with a matching mechanism counter is harder to argue with.
 
 This compares a shipped release against master, so intervening changes and build environments are part of the comparison. The profiler evidence matches the mechanisms closely, but not every CPU point can be assigned to one commit.
 
-The work started with people saying the sidebar was too busy, along with bug reports and performance reports from people running far stranger sessions than we test. Keep them coming, and thank you to everyone helping make Herdr better.
+The work started with people saying the sidebar was too busy, along with bug reports and performance reports from people running far stranger sessions than we test. Keep them coming, and thank you to everyone helping make Innov better.

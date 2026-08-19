@@ -194,7 +194,7 @@ pub struct Workspace {
     pub(crate) cached_git_ahead_behind: Option<(usize, usize)>,
     /// Cached derived Git repo metadata for worktree actions and status display.
     pub(crate) cached_git_space: Option<GitSpaceMetadata>,
-    /// Explicit Herdr-managed worktree grouping provenance.
+    /// Explicit Innov-managed worktree grouping provenance.
     pub worktree_space: Option<WorktreeSpaceMembership>,
     pub(crate) metadata_tokens: crate::metadata_tokens::MetadataTokens,
     pub(crate) metadata_token_sequences: HashMap<String, u64>,
@@ -1534,9 +1534,9 @@ mod tests {
         assert!(first.starts_with('w'));
         assert!(second.starts_with('w'));
         assert_ne!(first, second);
-        assert!(first.len() <= 3, "unexpectedly long workspace id: {first}");
+        assert!(first.len() <= 4, "unexpectedly long workspace id: {first}");
         assert!(
-            second.len() <= 3,
+            second.len() <= 4,
             "unexpectedly long workspace id: {second}"
         );
     }
@@ -1670,7 +1670,7 @@ mod tests {
             .expect("clock should be after unix epoch")
             .as_nanos();
         let root = std::env::temp_dir().join(format!(
-            "herdr-workspace-git-metadata-{}-{stamp}",
+            "innov-workspace-git-metadata-{}-{stamp}",
             std::process::id()
         ));
         std::fs::create_dir_all(root.join(".git")).expect("create git directory");
@@ -1730,7 +1730,7 @@ mod tests {
             .expect("clock should be after unix epoch")
             .as_nanos();
         let root = std::env::temp_dir().join(format!(
-            "herdr-workspace-label-cache-{}-{stamp}",
+            "innov-workspace-label-cache-{}-{stamp}",
             std::process::id()
         ));
         let cwd = root.join("deep/nested");
@@ -1775,14 +1775,14 @@ mod tests {
         let mut terminals = HashMap::new();
         terminals.insert(
             terminal_id.clone(),
-            TerminalState::new(terminal_id, PathBuf::from("/herdr-test/pion")),
+            TerminalState::new(terminal_id, PathBuf::from("/innov-test/pion")),
         );
         let terminal_runtimes = TerminalRuntimeRegistry::new();
 
         assert_eq!(ws.display_name_from(&terminals, &terminal_runtimes), "pion");
         assert_eq!(
             ws.resolved_identity_cwd_from(&terminals, &terminal_runtimes),
-            Some(PathBuf::from("/herdr-test/pion"))
+            Some(PathBuf::from("/innov-test/pion"))
         );
     }
 

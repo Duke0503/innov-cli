@@ -6,10 +6,14 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 const PRODUCT_ANNOUNCEMENTS_PATH: &str = "product-announcements.json";
-const FAKE_ANNOUNCEMENT_BODY_ENV: &str = "HERDR_FAKE_PRODUCT_ANNOUNCEMENT_BODY";
-const FAKE_ANNOUNCEMENT_BODY_FILE_ENV: &str = "HERDR_FAKE_PRODUCT_ANNOUNCEMENT_BODY_FILE";
-const FAKE_ANNOUNCEMENT_ID_ENV: &str = "HERDR_FAKE_PRODUCT_ANNOUNCEMENT_ID";
-const FAKE_ANNOUNCEMENT_TITLE_ENV: &str = "HERDR_FAKE_PRODUCT_ANNOUNCEMENT_TITLE";
+const FAKE_ANNOUNCEMENT_BODY_ENV: &str = "INNOV_FAKE_PRODUCT_ANNOUNCEMENT_BODY";
+const FAKE_ANNOUNCEMENT_BODY_FILE_ENV: &str = "INNOV_FAKE_PRODUCT_ANNOUNCEMENT_BODY_FILE";
+const FAKE_ANNOUNCEMENT_ID_ENV: &str = "INNOV_FAKE_PRODUCT_ANNOUNCEMENT_ID";
+const FAKE_ANNOUNCEMENT_TITLE_ENV: &str = "INNOV_FAKE_PRODUCT_ANNOUNCEMENT_TITLE";
+const LEGACY_FAKE_ANNOUNCEMENT_BODY_ENV: &str = "HERDR_FAKE_PRODUCT_ANNOUNCEMENT_BODY";
+const LEGACY_FAKE_ANNOUNCEMENT_BODY_FILE_ENV: &str = "HERDR_FAKE_PRODUCT_ANNOUNCEMENT_BODY_FILE";
+const LEGACY_FAKE_ANNOUNCEMENT_ID_ENV: &str = "HERDR_FAKE_PRODUCT_ANNOUNCEMENT_ID";
+const LEGACY_FAKE_ANNOUNCEMENT_TITLE_ENV: &str = "HERDR_FAKE_PRODUCT_ANNOUNCEMENT_TITLE";
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ManifestAnnouncement {
@@ -137,18 +141,26 @@ fn load_fake_for_current_version() -> Option<ProductAnnouncement> {
     let body = std::env::var(FAKE_ANNOUNCEMENT_BODY_FILE_ENV)
         .ok()
         .and_then(|path| fs::read_to_string(path).ok())
-        .or_else(|| std::env::var(FAKE_ANNOUNCEMENT_BODY_ENV).ok())?;
+        .or_else(|| {
+            std::env::var(LEGACY_FAKE_ANNOUNCEMENT_BODY_FILE_ENV)
+                .ok()
+                .and_then(|path| fs::read_to_string(path).ok())
+        })
+        .or_else(|| std::env::var(FAKE_ANNOUNCEMENT_BODY_ENV).ok())
+        .or_else(|| std::env::var(LEGACY_FAKE_ANNOUNCEMENT_BODY_ENV).ok())?;
     let body = normalize_body(&body);
     if body.is_empty() {
         return None;
     }
 
     let id = std::env::var(FAKE_ANNOUNCEMENT_ID_ENV)
+        .or_else(|_| std::env::var(LEGACY_FAKE_ANNOUNCEMENT_ID_ENV))
         .ok()
         .map(|value| value.trim().to_string())
         .filter(|value| !value.is_empty())
         .unwrap_or_else(|| "local-preview".to_string());
     let title = std::env::var(FAKE_ANNOUNCEMENT_TITLE_ENV)
+        .or_else(|_| std::env::var(LEGACY_FAKE_ANNOUNCEMENT_TITLE_ENV))
         .ok()
         .map(|value| value.trim().to_string())
         .filter(|value| !value.is_empty())
@@ -237,7 +249,7 @@ mod tests {
 
     fn temp_path(name: &str) -> PathBuf {
         std::env::temp_dir().join(format!(
-            "herdr-product-announcements-{name}-{}-{}.json",
+            "innov-product-announcements-{name}-{}-{}.json",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)

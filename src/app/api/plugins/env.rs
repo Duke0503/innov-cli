@@ -17,6 +17,15 @@ pub(super) fn plugin_path_env(plugin: &InstalledPluginInfo) -> Vec<(String, Stri
     let state_dir = plugin_state_dir(&plugin.plugin_id);
 
     vec![
+        ("INNOV_PLUGIN_ROOT".to_string(), plugin.plugin_root.clone()),
+        (
+            "INNOV_PLUGIN_CONFIG_DIR".to_string(),
+            config_dir.display().to_string(),
+        ),
+        (
+            "INNOV_PLUGIN_STATE_DIR".to_string(),
+            state_dir.display().to_string(),
+        ),
         ("HERDR_PLUGIN_ROOT".to_string(), plugin.plugin_root.clone()),
         (
             "HERDR_PLUGIN_CONFIG_DIR".to_string(),

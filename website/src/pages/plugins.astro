@@ -1,7 +1,7 @@
 ---
 import SiteLayout from '../components/SiteLayout.astro';
 import fixture from '../data/plugins-fixture.json';
-const snapshotUrl = 'https://assets.herdr.dev/plugins/index.json';
+const snapshotUrl = 'https://assets.innov.dev/plugins/index.json';
 
 // Seed the page server-side from the public R2 snapshot so `bun run dev` and
 // the production build both render real data immediately. If the live fetch
@@ -29,8 +29,8 @@ const apiUrl = import.meta.env.DEV ? null : snapshotUrl;
 ---
 
 <SiteLayout
-  title="Herdr plugins: community plugin marketplace"
-  description="Discover community Herdr plugins published on GitHub. An automatic index of public repositories tagged with the herdr-plugin topic."
+  title="Innov plugins: community plugin marketplace"
+  description="Discover community Innov plugins published on GitHub. An automatic index of public repositories tagged with the innov-plugin topic."
   canonicalPath="/plugins/"
 >
   <main class="plugins-page">
@@ -40,12 +40,12 @@ const apiUrl = import.meta.env.DEV ? null : snapshotUrl;
       <h1>Built by the herd.</h1>
       <p>
         Community plugins published on GitHub, discovered automatically from the
-        <code>herdr-plugin</code> topic. Install any of them with
-        <code>herdr plugin install</code>, or publish your own and get listed.
+        <code>innov-plugin</code> topic. Install any of them with
+        <code>innov plugin install</code>, or publish your own and get listed.
       </p>
       <p class="plugins-trust">
         <span class="status-dot dot-idle"></span>
-        Listings aren't reviewed by Herdr, so install at your own discretion.
+        Listings aren't reviewed by Innov, so install at your own discretion.
         <a href="/docs/plugins/#trust-and-security">Trust guidance →</a>
       </p>
       </div>
@@ -124,8 +124,8 @@ const apiUrl = import.meta.env.DEV ? null : snapshotUrl;
         <p class="section-kicker"># publish</p>
         <h3>Want your plugin listed?</h3>
         <p>
-          Add the GitHub topic <code>herdr-plugin</code> to a public repository
-          with a <code>herdr-plugin.toml</code> manifest. The index picks it up
+          Add the GitHub topic <code>innov-plugin</code> to a public repository
+          with a <code>innov-plugin.toml</code> manifest. The index picks it up
           on the next refresh. No submission, no review queue.
         </p>
         <div class="plugins-publish-actions">

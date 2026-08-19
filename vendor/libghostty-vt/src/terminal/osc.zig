@@ -43,7 +43,7 @@ pub const Command = union(Key) {
     /// in the log.
     change_window_icon: [:0]const u8,
 
-    /// Semantic prompt command: https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
+    /// Semantic prompt command: https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/main/proposals/semantic-prompts.md
     semantic_prompt: SemanticPrompt,
 
     /// Set or get clipboard contents. If data is null, then the current

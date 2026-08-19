@@ -480,7 +480,7 @@ mod tests {
             .expect("system clock after epoch")
             .as_nanos();
         std::path::PathBuf::from("/var/tmp").join(format!(
-            "herdr-tab-status-{name}-{}-{stamp}",
+            "innov-tab-status-{name}-{}-{stamp}",
             std::process::id()
         ))
     }

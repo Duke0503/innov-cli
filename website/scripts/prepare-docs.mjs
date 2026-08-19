@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 
 const websiteDir = dirname(fileURLToPath(import.meta.url));
-const repoRoot = process.env.HERDR_DOCS_REPO_ROOT
-  ? resolve(process.env.HERDR_DOCS_REPO_ROOT)
+const repoRoot = process.env.INNOV_DOCS_REPO_ROOT
+  ? resolve(process.env.INNOV_DOCS_REPO_ROOT)
   : resolve(websiteDir, '../..');
 const publicDir = resolve(repoRoot, 'website/public');
 const stableDocsDir = resolve(repoRoot, 'website/src/content/docs');
@@ -210,32 +210,32 @@ async function prepareDocs({ draft, publishAgentIndexes }) {
     await Promise.all([
       writeAgentDocsIndex({
         output: resolve(publicDir, 'llms.txt'),
-        heading: 'Herdr stable documentation index',
+        heading: 'Innov stable documentation index',
         summary: `Current stable release: ${manifest.current}.`,
         sourceDir: stableSourceDir,
         ref: currentEntry.tag,
         repositoryPath: currentEntry.source,
         extraSections: [
           '## Optional bundles',
-          '- [Abridged documentation](https://herdr.dev/llms-small.txt)',
-          '- [Complete documentation](https://herdr.dev/llms-full.txt)',
+          '- [Abridged documentation](https://innov.dev/llms-small.txt)',
+          '- [Complete documentation](https://innov.dev/llms-full.txt)',
           '',
           '## Other resources',
-          '- [Agent guide](https://herdr.dev/agent-guide.md): help a human understand, set up, or troubleshoot Herdr',
-          '- [Preview documentation](https://herdr.dev/llms-preview.txt): use only for the preview channel',
+          '- [Agent guide](https://innov.dev/agent-guide.md): help a human understand, set up, or troubleshoot Innov',
+          '- [Preview documentation](https://innov.dev/llms-preview.txt): use only for the preview channel',
         ],
       }),
       writeAgentDocsIndex({
         output: resolve(publicDir, 'llms-preview.txt'),
-        heading: 'Herdr preview documentation index',
+        heading: 'Innov preview documentation index',
         summary: `Active preview build: ${previewBuild} (${previewRef.slice(0, 12)}).`,
         sourceDir: previewDocsSourceDir,
         ref: previewRef,
         repositoryPath: 'docs/next/website/src/content/docs',
         extraSections: [
           '## Other resources',
-          '- [Stable documentation](https://herdr.dev/llms.txt): use unless the human is running the preview channel',
-          '- [Agent guide](https://herdr.dev/agent-guide.md): help a human understand, set up, or troubleshoot Herdr',
+          '- [Stable documentation](https://innov.dev/llms.txt): use unless the human is running the preview channel',
+          '- [Agent guide](https://innov.dev/agent-guide.md): help a human understand, set up, or troubleshoot Innov',
         ],
       }),
     ]);
@@ -252,7 +252,7 @@ async function writeAgentDocsIndex({
   extraSections,
 }) {
   const pages = await collectAgentDocs(sourceDir);
-  const rawRoot = `https://raw.githubusercontent.com/herdrdev/herdr/${ref}`;
+  const rawRoot = `https://raw.githubusercontent.com/Duke0503/cli/${ref}`;
   const rawBase = `${rawRoot}/${repositoryPath}`;
   const configDataPath = repositoryPath.replace(
     /\/content\/docs$/,
@@ -402,7 +402,7 @@ export function rewritePreviewDocContent(
   const rewritten = rewriteRelativeDocPaths(taggedContent, 1);
   const withSourceLink = setGeneratedEditUrl(
     rewritten,
-    `https://github.com/herdrdev/herdr/blob/${commit}/docs/next/website/src/content/docs/${relativePath}`,
+    `https://github.com/Duke0503/cli/blob/${commit}/docs/next/website/src/content/docs/${relativePath}`,
   );
   return insertPreviewNotice(withSourceLink, relativePath, { buildId, commit });
 }
@@ -422,18 +422,18 @@ export function rewriteVersionDocContent(content, { version, tag, relativePath }
 }
 
 function versionedDocSourceUrl(version, relativePath) {
-  return `https://github.com/herdrdev/herdr/blob/master/docs/versions/${version}/website/src/content/docs/${relativePath}`;
+  return `https://github.com/Duke0503/cli/blob/main/docs/versions/${version}/website/src/content/docs/${relativePath}`;
 }
 
 function rewriteRepositoryLinks(content, ref) {
   return content
     .replaceAll(
-      'https://github.com/herdrdev/herdr/blob/master/',
-      `https://github.com/herdrdev/herdr/blob/${ref}/`,
+      'https://github.com/Duke0503/cli/blob/main/',
+      `https://github.com/Duke0503/cli/blob/${ref}/`,
     )
     .replaceAll(
-      'https://raw.githubusercontent.com/herdrdev/herdr/master/',
-      `https://raw.githubusercontent.com/herdrdev/herdr/${ref}/`,
+      'https://raw.githubusercontent.com/Duke0503/cli/main/',
+      `https://raw.githubusercontent.com/Duke0503/cli/${ref}/`,
     );
 }
 
@@ -450,7 +450,7 @@ function setGeneratedEditUrl(content, editUrl) {
 }
 
 function insertPreviewNotice(content, relativePath, { buildId, commit }) {
-  const source = commit === 'master' ? '`master` draft' : `[${commit.slice(0, 12)}](https://github.com/herdrdev/herdr/commit/${commit})`;
+  const source = commit === 'master' ? '`master` draft' : `[${commit.slice(0, 12)}](https://github.com/Duke0503/cli/commit/${commit})`;
   const notice = [
     `> Preview build \`${buildId}\`, published from ${source}. Stable docs remain at [/docs/](/docs/).`,
     '',
@@ -458,7 +458,7 @@ function insertPreviewNotice(content, relativePath, { buildId, commit }) {
   ].join('\n');
   const indexPrefix =
     relativePath === 'index.mdx'
-      ? content.replace('title: Herdr documentation', 'title: Herdr preview documentation')
+      ? content.replace('title: Innov documentation', 'title: Innov preview documentation')
       : content;
   const frontmatter = indexPrefix.match(/^---\n[\s\S]*?\n---\n/);
   if (!frontmatter) {

@@ -17,7 +17,16 @@ use tokio::sync::mpsc;
 
 use crate::api::schema::{Method, Request};
 
-pub const SOCKET_PATH_ENV_VAR: &str = "HERDR_SOCKET_PATH";
+pub const SOCKET_PATH_ENV_VAR: &str = "INNOV_SOCKET_PATH";
+pub const LEGACY_SOCKET_PATH_ENV_VARS: &[&str] = &["CLI_SOCKET_PATH", "HERDR_SOCKET_PATH"];
+
+pub fn socket_path_override() -> Option<std::ffi::OsString> {
+    std::env::var_os(SOCKET_PATH_ENV_VAR).or_else(|| {
+        LEGACY_SOCKET_PATH_ENV_VARS
+            .iter()
+            .find_map(std::env::var_os)
+    })
+}
 
 pub(crate) fn request_changes_ui(request: &Request) -> bool {
     matches!(

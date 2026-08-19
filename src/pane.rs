@@ -70,7 +70,7 @@ pub(crate) fn aggregate_input_state_reads() -> usize {
 }
 
 fn apply_pane_terminal_env(cmd: &mut CommandBuilder) {
-    // Each pane is rendered by herdr's own terminal layer, not the outer terminal
+    // Each pane is rendered by innov's own terminal layer, not the outer terminal
     // that launched the app. Advertising the inherited TERM leaks the host terminal
     // identity into shells and across SSH, which breaks redraw and cursor movement
     // when the remote side lacks matching terminfo entries.
@@ -130,6 +130,9 @@ fn apply_pane_launch_env(cmd: &mut CommandBuilder, launch_env: &PaneLaunchEnv) {
         cmd.env(key, value);
     }
     cmd.env(crate::CLI_ENV_VAR, crate::CLI_ENV_VALUE);
+    for legacy_var in crate::LEGACY_CLI_ENV_VARS {
+        cmd.env(legacy_var, crate::CLI_ENV_VALUE);
+    }
     crate::integration::apply_pane_base_env(cmd);
     crate::platform::apply_pane_runtime_marker(cmd);
     match &launch_env.identity {
@@ -139,11 +142,15 @@ fn apply_pane_launch_env(cmd: &mut CommandBuilder, launch_env: &PaneLaunchEnv) {
             tab_id,
             pane_id,
         } => {
+            cmd.env(crate::integration::INNOV_WORKSPACE_ID_ENV_VAR, workspace_id);
+            cmd.env(crate::integration::INNOV_TAB_ID_ENV_VAR, tab_id);
+            cmd.env(crate::integration::INNOV_PANE_ID_ENV_VAR, pane_id);
             cmd.env(crate::integration::HERDR_WORKSPACE_ID_ENV_VAR, workspace_id);
             cmd.env(crate::integration::HERDR_TAB_ID_ENV_VAR, tab_id);
             cmd.env(crate::integration::HERDR_PANE_ID_ENV_VAR, pane_id);
         }
         PaneLaunchIdentity::OmitPane => {
+            cmd.env_remove(crate::integration::INNOV_PANE_ID_ENV_VAR);
             cmd.env_remove(crate::integration::HERDR_PANE_ID_ENV_VAR);
         }
     }
@@ -1487,7 +1494,7 @@ fn resolve_shell_for_login_mode(shell: &str) -> io::Result<String> {
 /// The original prompt must be invoked before any other statement in the
 /// wrapper: anything that runs first resets `$?`, so a status-aware user
 /// prompt would show success after a failed command (verified on 5.1).
-pub(crate) const WINDOWS_POWERSHELL_SHELL_INTEGRATION_COMMAND: &str = r"if ($null -eq $global:__HerdrOriginalPrompt) { $global:__HerdrOriginalPrompt = $function:prompt; function global:prompt { $out = @(& $global:__HerdrOriginalPrompt) -join ' '; $loc = $ExecutionContext.SessionState.Path.CurrentLocation; if ($loc.Provider.Name -eq 'FileSystem') { try { [Environment]::CurrentDirectory = $loc.ProviderPath } catch {}; $esc = [string][char]27; $out += $esc + ']9;9;' + $loc.ProviderPath + $esc + '\' }; $out } }";
+pub(crate) const WINDOWS_POWERSHELL_SHELL_INTEGRATION_COMMAND: &str = r"if ($null -eq $global:__InnovOriginalPrompt) { $global:__InnovOriginalPrompt = $function:prompt; function global:prompt { $out = @(& $global:__InnovOriginalPrompt) -join ' '; $loc = $ExecutionContext.SessionState.Path.CurrentLocation; if ($loc.Provider.Name -eq 'FileSystem') { try { [Environment]::CurrentDirectory = $loc.ProviderPath } catch {}; $esc = [string][char]27; $out += $esc + ']9;9;' + $loc.ProviderPath + $esc + '\' }; $out } }";
 
 fn pane_shell_command_builder_for_target(
     shell_config: PaneShellConfig<'_>,
@@ -3093,7 +3100,7 @@ mod tests {
             .expect("clock should be after unix epoch")
             .as_nanos();
         let cwd = std::env::temp_dir().join(format!(
-            "herdr-reported-cwd-cache-{}-{stamp}",
+            "innov-reported-cwd-cache-{}-{stamp}",
             std::process::id()
         ));
         std::fs::create_dir(&cwd).expect("create reported cwd");
@@ -3122,7 +3129,7 @@ mod tests {
             .expect("clock should be after unix epoch")
             .as_nanos();
         let base = std::env::temp_dir().join(format!(
-            "herdr-process-cwd-no-stat-{}-{stamp}",
+            "innov-process-cwd-no-stat-{}-{stamp}",
             std::process::id()
         ));
         let private = base.join("private");
@@ -3198,7 +3205,7 @@ mod tests {
             })
             .unwrap();
         let output_path = std::env::temp_dir().join(format!(
-            "herdr-pane-term-test-{}-{}.txt",
+            "innov-pane-term-test-{}-{}.txt",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -3356,11 +3363,11 @@ mod tests {
         let osc_report = script.find("]9;9;").expect("wrapper must emit OSC 9;9");
         assert!(cwd_sync < osc_report, "cwd sync must precede OSC report");
         assert!(
-            script.contains("$global:__HerdrOriginalPrompt = $function:prompt"),
+            script.contains("$global:__InnovOriginalPrompt = $function:prompt"),
             "must wrap the profile-defined prompt: {script}"
         );
         assert!(
-            script.contains("$null -eq $global:__HerdrOriginalPrompt"),
+            script.contains("$null -eq $global:__InnovOriginalPrompt"),
             "wrap must be idempotent for nested sessions: {script}"
         );
         assert!(
@@ -3372,7 +3379,7 @@ mod tests {
             "double quotes corrupt the powershell.exe command-line round-trip: {script}"
         );
         let invoke_original = script
-            .find("@(& $global:__HerdrOriginalPrompt)")
+            .find("@(& $global:__InnovOriginalPrompt)")
             .expect("wrapper must invoke the original prompt");
         let cwd_lookup = script
             .find("$loc =")
@@ -3434,7 +3441,7 @@ mod tests {
     fn login_shell_builder_rejects_missing_shell_instead_of_falling_back() {
         let err = pane_shell_command_builder_for_target(
             PaneShellConfig::new(
-                "/__herdr_missing_shell__",
+                "/__innov_missing_shell__",
                 crate::config::ShellModeConfig::Login,
             ),
             ShellLaunchTarget::OtherUnix,
@@ -3448,7 +3455,7 @@ mod tests {
     fn login_shell_builder_resolves_bare_shell_names_from_path() {
         let _lock = crate::integration::integration_env_lock();
         let base = std::env::temp_dir().join(format!(
-            "herdr-login-shell-path-{}-{}",
+            "innov-login-shell-path-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -4448,7 +4455,7 @@ mod tests {
 
         tx.try_send(AppEvent::UpdateReady {
             version: "9.9.9".into(),
-            install_command: "herdr update".into(),
+            install_command: "innov update".into(),
         })
         .unwrap();
 

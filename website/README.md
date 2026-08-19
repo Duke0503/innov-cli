@@ -1,4 +1,4 @@
-# herdr website
+# innov website
 
 The homepage is `index.html`. Astro Starlight renders the documentation.
 

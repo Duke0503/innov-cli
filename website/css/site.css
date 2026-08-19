@@ -1,6 +1,6 @@
 /* ──────────────────────────────────────────────────────────────
-   site.css — herdr.dev chassis. Loaded after style.css, which is
-   kept only for the session mock (.herdr-ui-mock) and its tokens.
+   site.css — innov.dev chassis. Loaded after style.css, which is
+   kept only for the session mock (.innov-ui-mock) and its tokens.
    Ink is the default ground; paper is shared with the docs via
    Starlight's `starlight-theme` key.
    ────────────────────────────────────────────────────────────── */
@@ -231,7 +231,7 @@ body.site .plate {
 
 body.site .plate .hero-product-shot { height: 100%; margin: 0; padding: 0; }
 body.site .plate .hero-product-shot figcaption { display: none; }
-body.site .plate .herdr-ui-mock {
+body.site .plate .innov-ui-mock {
   max-width: none; width: 100%; height: 100%; aspect-ratio: auto;
   border: 0; border-radius: 0; box-shadow: none;
   font-size: clamp(.6rem, .92cqw, .95rem);
@@ -769,7 +769,7 @@ body.site .foot .ico:hover { color: var(--ink); }
 
 /* the mock scales on its own width — .hero-product-shot is the container */
 @container (max-width: 900px) {
-  body.site .herdr-ui-mock {
+  body.site .innov-ui-mock {
     aspect-ratio: auto; height: 74vh; min-height: 460px;
     grid-template-columns: minmax(84px, 27%) minmax(0, 1fr);
   }

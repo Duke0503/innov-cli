@@ -1,4 +1,4 @@
-# herdr
+# innov
 
 Terminal based agent runtime for coding agents.
 
@@ -8,15 +8,15 @@ These instructions are layered.
 
 - Unless a section explicitly says it is maintainer-only, local-machine-only, or
   external-contributor-only, treat it as universal project guidance.
-- Universal project rules apply to every agent working on Herdr, including forks.
+- Universal project rules apply to every agent working on Innov, including forks.
 - Maintainer accounts are listed in `.github/MAINTAINERS`. Treat the acting
   account as a verified maintainer only when its username is listed there, the
-  configured remote is the canonical `herdrdev/herdr` repository, and the
+  configured remote is the canonical `Duke0503/cli` repository, and the
   authenticated account has write access to that repository. If any condition
   cannot be verified, skip maintainer workflow and follow the external
   contributor guardrail instead.
 - Local Can machine workflow applies only on Can's own workstation or Windows
-  VM setup, for example when `/home/can/Projects/herdr`, `HERDR_ENV=1`, or the
+  VM setup, for example when `/home/can/Projects/innov`, `INNOV_ENV=1`, or the
   `windows-wirt` SSH alias exists. If those facts are not true, skip local
   machine workflow.
 - External contributor guardrail applies whenever the acting GitHub account is
@@ -32,8 +32,8 @@ These instructions are layered.
 - **No god objects.** If a module is doing too many things, split it. `app/` is already split into state, actions, and input. Keep it that way.
 - **Platform code is isolated.** OS-specific behavior lives in the matching `src/platform/<os>.rs` file, with only shared traits, types, wrappers, and testable contracts in `src/platform/mod.rs`. Core modules don't have `#[cfg(target_os)]`.
 - **Detection is decoupled.** The detector reads a screen snapshot, never touches the parser or viewport state.
-- **Screen detection is evidence-based.** When changing `src/detect/manifests/`, first capture the relevant bottom-buffer state with `herdr agent read <pane> --source detection --format text` and, when styling or alternate screen behavior matters, `--format ansi`. Decide which visible controls are invariant, which are alternatives, and encode them as explicit AND/OR gates. Do not match whole-pane incidental text, and do not use the user-visible viewport for agent status because users can scroll it.
-- **UI patterns should be reused.** Herdr is a mouse-first TUI. New dialogs, onboarding, settings, and post-update flows should follow the existing UI/UX language and interaction patterns instead of inventing one-off screens. Prefer reusing existing modal/screen structure, affordances, and close actions so the app feels consistent.
+- **Screen detection is evidence-based.** When changing `src/detect/manifests/`, first capture the relevant bottom-buffer state with `innov agent read <pane> --source detection --format text` and, when styling or alternate screen behavior matters, `--format ansi`. Decide which visible controls are invariant, which are alternatives, and encode them as explicit AND/OR gates. Do not match whole-pane incidental text, and do not use the user-visible viewport for agent status because users can scroll it.
+- **UI patterns should be reused.** Innov is a mouse-first TUI. New dialogs, onboarding, settings, and post-update flows should follow the existing UI/UX language and interaction patterns instead of inventing one-off screens. Prefer reusing existing modal/screen structure, affordances, and close actions so the app feels consistent.
 
 ### Multiplicative performance paths
 
@@ -62,7 +62,7 @@ coverage.
 
 ### Runtime/client boundary guardrail
 
-Herdr is migrating toward a server-owned runtime protocol with the TUI as one client. New work should not deepen the current server/TUI coupling.
+Innov is migrating toward a server-owned runtime protocol with the TUI as one client. New work should not deepen the current server/TUI coupling.
 
 Before adding state, API fields, events, commands, or socket messages, classify the feature:
 
@@ -91,17 +91,17 @@ Small changes or small tasks are fine in the default main worktree. If you find 
 
 Use this layout:
 
-- shared integration checkout: `../herdr`
-- task worktrees: `../herdr-worktrees/<task-slug>`
+- shared integration checkout: `../innov`
+- task worktrees: `../innov-worktrees/<task-slug>`
 - task branches: `issue/<id>-<slug>` when an issue exists
 
 Do all code edits, tests, and validation inside the task worktree.
 
 Commit on the task branch in that worktree.
 
-For substantive feature and bug-fix work, default to opening a pull request instead of pushing `master` directly. Small, low-risk changes and documentation-only updates can use a lighter workflow when Can prefers it.
+For substantive feature and bug-fix work, default to opening a pull request instead of pushing `main` directly. Small, low-risk changes and documentation-only updates can use a lighter workflow when Can prefers it.
 
-Immediately before opening a pull request, fetch `origin` and make sure the task branch is based on the current `origin/master`; rebase it when behind, then rerun relevant validation before pushing. If `master` advances while the pull request is under review and GitHub marks it behind, update the branch and repeat checks and bot review on the new head.
+Immediately before opening a pull request, fetch `origin` and make sure the task branch is based on the current `origin/main`; rebase it when behind, then rerun relevant validation before pushing. If `main` advances while the pull request is under review and GitHub marks it behind, update the branch and repeat checks and bot review on the new head.
 
 After opening or updating a pull request, monitor all checks to completion with `gh pr checks --watch` or an equivalent command. Treat Greptile and CodeRabbit as part of CI: wait for both to review the latest pushed commit, not only for the build and test jobs to pass. Evaluate every actionable finding. Fix findings you agree with and reply with the fix; reply inline with a concise technical reason when you disagree. After any fix, wait for CI and both review bots again on the new head.
 
@@ -128,13 +128,13 @@ Unit tests live next to the code (`#[cfg(test)] mod tests`). New `AppState` or `
 
 For broad refactors or release-risk regressions, classify the risk before editing. Treat changes as refactor-risk when they touch two or more core surfaces, persisted state, protocol/API IDs, workspace/tab/pane identity, restore/handoff, agent detection authority, or UI/input state projection. Before moving code, identify the protected behavior and add or name characterization tests. Identity/state refactors should use the test-only invariants `AppState::assert_invariants_for_test()` or `Workspace::assert_invariants_for_test()` with adversarial state from `AppState::test_with_adversarial_identity_state()` or `Workspace::test_adversarial_identity_state()`. Run a roundtable for broad refactors and release-risk regressions, not for routine local fixes.
 
-When testing a new Herdr build from inside an existing Herdr session, use
-`cargo run -- ...` and clear inherited Herdr socket overrides so the debug
-binary talks to the debug `herdr-dev` server instead of the installed stable
+When testing a new Innov build from inside an existing Innov session, use
+`cargo run -- ...` and clear inherited Innov socket overrides so the debug
+binary talks to the debug `innov-dev` server instead of the installed stable
 server:
 
 ```bash
-env -u HERDR_SOCKET_PATH -u HERDR_CLIENT_SOCKET_PATH cargo run -- <command>
+env -u INNOV_SOCKET_PATH -u INNOV_CLIENT_SOCKET_PATH cargo run -- <command>
 ```
 
 ## Local Can Machine Workflow
@@ -150,15 +150,15 @@ The Windows VM is for final/manual Windows validation, not normal agent work.
 Connect to it with the `windows-wirt` SSH alias.
 
 Use the single reusable checkout at `C:\work\repo`. Do not create additional
-persistent Herdr clones or worktrees on the VM. The Windows account is already
-named `herdr`, so avoid paths like `C:\Users\herdr\herdr`.
+persistent Innov clones or worktrees on the VM. The Windows account is already
+named `innov`, so avoid paths like `C:\Users\innov\innov`.
 
 Before validating a fix on Windows, sync or apply the Linux worktree changes
 into `C:\work\repo`, then run the needed Windows build or test commands there.
-Reuse the shared Rust caches under `C:\Users\herdr\.cargo` and
-`C:\Users\herdr\.rustup`. Do not use WSL on the VM. The VM may have a newer
-Zig on `PATH`; Herdr currently requires Zig 0.15.2, so set
-`$env:ZIG = "C:\Users\herdr\zig-0.15.2\zig.exe"` before running Cargo commands
+Reuse the shared Rust caches under `C:\Users\innov\.cargo` and
+`C:\Users\innov\.rustup`. Do not use WSL on the VM. The VM may have a newer
+Zig on `PATH`; Innov currently requires Zig 0.15.2, so set
+`$env:ZIG = "C:\Users\innov\zig-0.15.2\zig.exe"` before running Cargo commands
 that build the vendored libghostty-vt.
 
 After validation, leave `C:\work\repo` clean. Remove temporary files and delete
@@ -168,7 +168,7 @@ manual testing, reset `C:\work\repo` back to a clean checkout before finishing.
 
 ## Agent Detection Updates
 
-Agent detection changes should use the manifest hot-reload loop. Use the project-local `herdr-throwaway-repro` skill to create a disposable named session and drive the real agent UI through Herdr's CLI/API into the target state. Read the pane with `herdr agent read <pane> --source detection --format text` and inspect matching with `herdr agent explain <pane> --json`. Update the bundled manifest in `src/detect/manifests/<agent>.toml`, copy that manifest to the local override path at `~/.config/herdr/agent-detection/<agent>.toml`, then run `herdr server reload-agent-manifests` against the session under test. Before writing the override, check whether one already exists; never overwrite or remove a pre-existing override without alignment. Once the rule is correct, remove the temporary override or restore the previous one exactly so the committed bundled manifest remains the source of truth.
+Agent detection changes should use the manifest hot-reload loop. Use the project-local `innov-throwaway-repro` skill to create a disposable named session and drive the real agent UI through Innov's CLI/API into the target state. Read the pane with `innov agent read <pane> --source detection --format text` and inspect matching with `innov agent explain <pane> --json`. Update the bundled manifest in `src/detect/manifests/<agent>.toml`, copy that manifest to the local override path at `~/.config/innov/agent-detection/<agent>.toml`, then run `innov server reload-agent-manifests` against the session under test. Before writing the override, check whether one already exists; never overwrite or remove a pre-existing override without alignment. Once the rule is correct, remove the temporary override or restore the previous one exactly so the committed bundled manifest remains the source of truth.
 
 Do not add large agent-specific full-screen fixture suites for routine manifest tuning. Keep Rust tests focused on manifest parsing, rule semantics, skip-state semantics, source precedence, cache reload behavior, and update flow. Use live pane reads for agent-specific screen evidence.
 
@@ -176,7 +176,7 @@ Do not add large agent-specific full-screen fixture suites for routine manifest 
 
 `vendor/libghostty-vt.vendor.json` records the upstream source commit currently vendored.
 
-Local patches on top of the vendored source must be tracked in `vendor/libghostty-vt.patches.md` and stored as patch files under `vendor/patches/libghostty-vt/`. Each entry should say why the patch exists, the Herdr issue, upstream PR/discussion, vendored base commit, touched files, verification, and the exact removal condition.
+Local patches on top of the vendored source must be tracked in `vendor/libghostty-vt.patches.md` and stored as patch files under `vendor/patches/libghostty-vt/`. Each entry should say why the patch exists, the Innov issue, upstream PR/discussion, vendored base commit, touched files, verification, and the exact removal condition.
 
 When updating libghostty-vt, check every active patch in `vendor/libghostty-vt.patches.md`. If the new upstream commit contains the fix, remove the local patch and index entry, then rerun the listed verification. If not, reapply the patch on top of the new vendored source.
 
@@ -184,7 +184,7 @@ When updating libghostty-vt, check every active patch in `vendor/libghostty-vt.p
 
 ## Docs
 
-`skills/herdr/SKILL.md` tracks the latest stable Herdr release because the unversioned `npx skills add herdrdev/herdr --skill herdr -g` command installs it from `master`. Do not update this file in feature or preview work. Review and update it only during stable release preparation, and include the change in the release commit with the `Cargo.toml` version bump. Preview builds keep the latest stable skill.
+`skills/innov/SKILL.md` tracks the latest stable Innov release because the unversioned `npx skills add Duke0503/cli --skill innov -g` command installs it from `main`. Do not update this file in feature or preview work. Review and update it only during stable release preparation, and include the change in the release commit with the `Cargo.toml` version bump. Preview builds keep the latest stable skill.
 
 Unreleased docs live in `docs/next/website/src/content/docs/`. Update those when a user-facing change needs docs before the next release. They are committed drafts but are never production website input. `docs/next/README.md` and `docs/next/CHANGELOG.md` stage root README and changelog changes.
 
@@ -192,7 +192,7 @@ The active preview release docs live in `docs/preview/website/`. Preview CI owns
 
 Published stable-release documentation lives in `docs/versions/`. Release CI seeds each version from the tagged `docs/next` tree, and maintainers may correct factual documentation errors in a published version afterward. Apply a correction separately to `docs/next` when it also applies to future releases; never replace a published tree with the current draft. The website build generates `/docs/preview/` from the active preview snapshot, `/docs/<version>/` from the maintained version directories, and `/docs/` from the version selected by `docs/versions/manifest.json`. Do not edit generated files under `website/src/content/docs/`.
 
-During release review, finalize `docs/next` and run `just release-docs-check`. Do not copy draft docs into preview or published versions manually. Preview CI snapshots the selected commit. After a stable GitHub Release succeeds, release CI seeds a new version from the exact tag, updates `latest.json`, and deploys them together. Normal feature/fix work should not edit root `README.md`, root `CHANGELOG.md`, published version docs, or `website/latest.json` unless it is a focused correction to already-published documentation or explicitly requested. `docs/next/CHANGELOG.md` is for user-facing Herdr runtime changes; do not add entries for website-only, documentation-only, CI, build-pipeline, or repository-maintenance changes.
+During release review, finalize `docs/next` and run `just release-docs-check`. Do not copy draft docs into preview or published versions manually. Preview CI snapshots the selected commit. After a stable GitHub Release succeeds, release CI seeds a new version from the exact tag, updates `latest.json`, and deploys them together. Normal feature/fix work should not edit root `README.md`, root `CHANGELOG.md`, published version docs, or `website/latest.json` unless it is a focused correction to already-published documentation or explicitly requested. `docs/next/CHANGELOG.md` is for user-facing Innov runtime changes; do not add entries for website-only, documentation-only, CI, build-pipeline, or repository-maintenance changes.
 
 Put local PRDs, planning notes, and exploratory specs under `.local/prd/`; `.local/` is ignored and locally controlled.
 
@@ -210,14 +210,14 @@ fix: handle pane focus
 refs #82
 ```
 
-Do not use GitHub closing keywords like `fixes #<issue-number>`, `closes #<issue-number>`, or `resolves #<issue-number>` in normal commits. `master` contains unreleased work; release CI closes referenced issues after the GitHub Release is created.
+Do not use GitHub closing keywords like `fixes #<issue-number>`, `closes #<issue-number>`, or `resolves #<issue-number>` in normal commits. `main` contains unreleased work; release CI closes referenced issues after the GitHub Release is created.
 
 ## Code Conventions
 
 - Rust: no `unwrap()` in production code. Use `tracing` for logging. Use `#[allow]` only with a comment explaining why.
 - Rust platform-specific code must be compile-gated. Put OS APIs and substantial OS behavior in `src/platform/`; when platform checks are needed elsewhere, use `#[cfg(windows)]`, `#[cfg(unix)]`, or target-specific `#[cfg(...)]` on imports, fields, functions, impls, and match arms so Windows-only code does not compile into Unix builds and Unix-only code does not compile into Windows builds. Use `cfg!(...)` only for pure cross-platform policy constants whose branches both compile on every target.
 - Don't add dependencies without a reason. Check whether existing dependencies cover the need first.
-- Integration asset versions (`HERDR_INTEGRATION_VERSION` markers and matching `*_INTEGRATION_VERSION` constants) are migration versions relative to the latest released tag, not per-commit counters on `master`. If an integration asset changes multiple times between releases, bump it once from the version in the latest release.
+- Integration asset versions (`INNOV_INTEGRATION_VERSION` markers and matching `*_INTEGRATION_VERSION` constants) are migration versions relative to the latest released tag, not per-commit counters on `main`. Legacy `HERDR_INTEGRATION_VERSION` markers remain readable for upgrades. If an integration asset changes multiple times between releases, bump it once from the version in the latest release.
 - When changing the server/client wire protocol, compare `src/protocol/wire.rs::PROTOCOL_VERSION` against protocols published in both stable and preview releases. Bump it when the current source protocol has already been published in either channel and the wire format changes incompatibly. Do not bump it again for multiple incompatible changes before that protocol is published. Update hardcoded protocol expectations and manual protocol fixtures in tests.
 
 ## Release Channels
@@ -227,22 +227,22 @@ account is not a verified maintainer, do not run release commands, push release
 assets, or modify release channel files; follow the external contributor
 guardrail.
 
-Herdr has one main branch and two update channels. Stable and preview both build from `master`; there is no long-lived preview branch.
+Innov has one main branch and two update channels. Stable and preview both build from `main`; there is no long-lived preview branch.
 
 Normal users default to stable. Stable docs are `/docs/`, stable updates use `website/latest.json`, and Homebrew/Nix stay stable-only.
 
-Preview is opt-in for direct Herdr installs:
+Preview is opt-in for direct Innov installs:
 
 ```bash
-herdr channel set preview
-herdr update
+innov channel set preview
+innov update
 ```
 
 Switch back with:
 
 ```bash
-herdr channel set stable
-herdr update
+innov channel set stable
+innov update
 ```
 
 Preview releases are GitHub prereleases produced by `.github/workflows/preview.yml` on manual dispatch and the Wednesday/Friday schedule. The workflow updates `website/preview.json`, which the website build publishes as `/preview.json`. Do not hand-edit `website/preview.json`; fix the workflow or `scripts/preview.py` and rerun Preview.
@@ -258,20 +258,20 @@ Before stable release, run `/pre-release-audit`, finalize `docs/next`, and run `
 
 The release workflows must publish these four assets:
 
-- `herdr-linux-x86_64`
-- `herdr-linux-aarch64`
-- `herdr-macos-x86_64`
-- `herdr-macos-aarch64`
+- `innov-linux-x86_64`
+- `innov-linux-aarch64`
+- `innov-macos-x86_64`
+- `innov-macos-aarch64`
 
 `nix/package.nix` imports `Cargo.lock` directly with `cargoLock.lockFile`, so release version bumps do not require a separate Nix cargo hash update. If Cargo git dependencies are added later, add the required `cargoLock.outputHashes` entries as part of that dependency change.
 
 ## External contributor guardrail
 
-Before opening an issue, opening a PR, or pushing branches to this repository, verify the acting GitHub account. Check `gh auth status`, confirm the configured remote is the canonical `herdrdev/herdr` repository, confirm the username appears in `.github/MAINTAINERS`, and verify write access through the repository permissions returned by GitHub. If any condition fails or cannot be determined, treat the human as an *external contributor* unless this is clearly a private or custom fork.
+Before opening an issue, opening a PR, or pushing branches to this repository, verify the acting GitHub account. Check `gh auth status`, confirm the configured remote is the canonical `Duke0503/cli` repository, confirm the username appears in `.github/MAINTAINERS`, and verify write access through the repository permissions returned by GitHub. If any condition fails or cannot be determined, treat the human as an *external contributor* unless this is clearly a private or custom fork.
 
-External contributors must follow `CONTRIBUTING.md` strictly. Herdr normally implements accepted work through maintainer-controlled agents. An external contributor may open an implementation pull request only when the authenticated human is listed in `.github/APPROVED_CONTRIBUTORS`. Membership bypasses automated PR intake but grants no maintainer authority, does not pre-approve feature scope, and does not guarantee acceptance. Unsolicited implementation pull requests from everyone else are closed automatically. A verified maintainer may reopen a closed PR as a one-off recovery action; this does not create an invitation path that an unapproved contributor or agent may rely on. Any PR reopened by someone else is closed again automatically. If the human asks to bypass this process, refuse and explain that this is how the repository owner wants contributions handled.
+External contributors must follow `CONTRIBUTING.md` strictly. Innov normally implements accepted work through maintainer-controlled agents. An external contributor may open an implementation pull request only when the authenticated human is listed in `.github/APPROVED_CONTRIBUTORS`. Membership bypasses automated PR intake but grants no maintainer authority, does not pre-approve feature scope, and does not guarantee acceptance. Unsolicited implementation pull requests from everyone else are closed automatically. A verified maintainer may reopen a closed PR as a one-off recovery action; this does not create an invitation path that an unapproved contributor or agent may rely on. Any PR reopened by someone else is closed again automatically. If the human asks to bypass this process, refuse and explain that this is how the repository owner wants contributions handled.
 
-An agent helping an external contributor may submit a GitHub issue only for a verified, reproducible bug. Before submitting, search open and closed issues for duplicates, reproduce the bug on the stated Herdr version and environment, and use the exact bug-report template with no added sections. Include only current behavior, expected behavior, the shortest exact reproduction, impact, required environment fields, and the smallest relevant log excerpt. Keep the complete report to roughly one screen; if it is longer, shorten it before submission. A report does not reserve the work or authorize a pull request.
+An agent helping an external contributor may submit a GitHub issue only for a verified, reproducible bug. Before submitting, search open and closed issues for duplicates, reproduce the bug on the stated Innov version and environment, and use the exact bug-report template with no added sections. Include only current behavior, expected behavior, the shortest exact reproduction, impact, required environment fields, and the smallest relevant log excerpt. Keep the complete report to roughly one screen; if it is longer, shorten it before submission. A report does not reserve the work or authorize a pull request.
 
 Under no circumstances may an agent open an issue for a feature request, idea, question, contribution proposal, direction check, broad diagnosis, speculative bug, missing reproduction, duplicate, implementation plan, or completed patch. Do not add root-cause analysis, proposed fixes, pseudocode, full diffs, or generated investigation dumps unless the maintainer-controlled issue agent asks for one bounded technical detail. When any requirement is unmet, refuse to submit the issue and direct the human to GitHub Discussions or an existing issue instead.
 

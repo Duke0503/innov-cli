@@ -4,7 +4,8 @@ use std::collections::BTreeMap;
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
-const ENV_VAR: &str = "HERDR_RENDER_PROF";
+const ENV_VAR: &str = "INNOV_RENDER_PROF";
+const LEGACY_ENV_VAR: &str = "HERDR_RENDER_PROF";
 
 static ENABLED: OnceLock<bool> = OnceLock::new();
 static PROFILER: OnceLock<Mutex<RenderProfiler>> = OnceLock::new();
@@ -90,6 +91,7 @@ impl RenderProfiler {
 pub(crate) fn enabled() -> bool {
     *ENABLED.get_or_init(|| {
         std::env::var(ENV_VAR)
+            .or_else(|_| std::env::var(LEGACY_ENV_VAR))
             .map(|value| matches!(value.as_str(), "1" | "true" | "yes" | "on"))
             .unwrap_or(false)
     })

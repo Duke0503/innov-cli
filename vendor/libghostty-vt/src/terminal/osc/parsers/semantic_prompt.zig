@@ -1,4 +1,4 @@
-//! https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
+//! https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/main/proposals/semantic-prompts.md
 const std = @import("std");
 
 const Parser = @import("../../osc.zig").Parser;

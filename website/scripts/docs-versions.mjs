@@ -11,8 +11,8 @@ import {
 } from './docs-snapshot.mjs';
 
 const websiteDir = dirname(fileURLToPath(import.meta.url));
-const repoRoot = process.env.HERDR_DOCS_REPO_ROOT
-  ? resolve(process.env.HERDR_DOCS_REPO_ROOT)
+const repoRoot = process.env.INNOV_DOCS_REPO_ROOT
+  ? resolve(process.env.INNOV_DOCS_REPO_ROOT)
   : resolve(websiteDir, '../..');
 const versionsDir = resolve(repoRoot, 'docs/versions');
 const manifestPath = resolve(versionsDir, 'manifest.json');

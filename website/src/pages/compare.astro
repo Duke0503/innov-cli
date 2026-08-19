@@ -3,18 +3,18 @@ import SiteLayout from '../components/SiteLayout.astro';
 ---
 
 <SiteLayout
-  title="Compare Herdr vs tmux, Zellij, cmux, Warp & agent managers"
-  description="Compare Herdr with tmux, Zellij, cmux, Warp, Solo, Conductor, Emdash, and Superset. Multiplexers persist terminals and apps manage agents. Herdr is the runtime agents live on, with clients on top."
+  title="Compare Innov vs tmux, Zellij, cmux, Warp & agent managers"
+  description="Compare Innov with tmux, Zellij, cmux, Warp, Solo, Conductor, Emdash, and Superset. Multiplexers persist terminals and apps manage agents. Innov is the runtime agents live on, with clients on top."
   canonicalPath="/compare/"
 >
   <main>
     <header class="ph ph-split">
       <div>
         <div class="hd-eyebrow"><s></s>compare</div>
-        <h1>Apps manage the herd. Herdr <em>runs</em> it.</h1>
+        <h1>Apps manage the herd. Innov <em>runs</em> it.</h1>
         <p>
-          Most tools Herdr gets compared to are apps: a window you open to
-          manage coding agents, and a window the work depends on. Herdr is a
+          Most tools Innov gets compared to are apps: a window you open to
+          manage coding agents, and a window the work depends on. Innov is a
           different kind of thing: a runtime. A server holds real terminals
           open on the machine, the agents live in those, and every UI, ours
           included, is just a client that attaches. Keep that split in mind
@@ -29,7 +29,7 @@ import SiteLayout from '../components/SiteLayout.astro';
 
     <section class="cmp" id="matrix">
       <div class="fighd">
-        <span>herdr against the field</span>
+        <span>innov against the field</span>
         <span class="r">scrolls sideways on a phone</span>
       </div>
       <div class="cmp-scroll">
@@ -37,7 +37,7 @@ import SiteLayout from '../components/SiteLayout.astro';
           <thead>
             <tr>
               <th>capability</th>
-              <th class="h">herdr</th>
+              <th class="h">innov</th>
               <th>tmux · zellij</th>
               <th>cmux · warp</th>
               <th>solo</th>
@@ -121,7 +121,7 @@ import SiteLayout from '../components/SiteLayout.astro';
         </table>
       </div>
       <p class="figcap">
-        The columns are categories, not enemies: Herdr pairs happily with a
+        The columns are categories, not enemies: Innov pairs happily with a
         worktree manager and runs fine inside a fancy terminal.
         <b>The row that sorts the field is the second one:</b> what happens to
         the agents when the thing you're looking at goes away.
@@ -132,7 +132,7 @@ import SiteLayout from '../components/SiteLayout.astro';
       <div class="cap cap-flat">
         <div class="n"><span>01</span></div>
         <div class="cap-in">
-          <h3>Herdr is the runtime.</h3>
+          <h3>Innov is the runtime.</h3>
           <p>
             A server owns the terminals; every UI is a client of it. The TUI in
             the screenshots attaches, detaches and even crashes without the
@@ -141,7 +141,7 @@ import SiteLayout from '../components/SiteLayout.astro';
           </p>
         </div>
         <div class="ev" aria-hidden="true">
-          <div class="ev-row"><span>herdr-server</span><b><i class="beat"></i>up</b></div>
+          <div class="ev-row"><span>innov-server</span><b><i class="beat"></i>up</b></div>
           <div class="ev-note">4 agents · 0 clients attached · still working</div>
         </div>
       </div>
@@ -150,7 +150,7 @@ import SiteLayout from '../components/SiteLayout.astro';
         <div class="cap-in">
           <h3>Multiplexers persist terminals, not agents.</h3>
           <p>
-            tmux gave humans persistence, and Herdr keeps that whole
+            tmux gave humans persistence, and Innov keeps that whole
             inheritance: real PTYs, detach, SSH. What it adds is the part
             multiplexers never had: knowing which pane is an agent, whether
             it's blocked, and how to wait on it instead of polling it.
@@ -168,13 +168,13 @@ import SiteLayout from '../components/SiteLayout.astro';
           <p>
             cmux and Warp can be genuinely polished, but the deal is that the
             work moves into their window, with their renderer, on the machines
-            they support. Herdr changes nothing about your terminal. It runs
+            they support. Innov changes nothing about your terminal. It runs
             inside it, wherever a terminal and SSH already reach.
           </p>
         </div>
         <div class="ev" aria-hidden="true">
           <div class="ev-row"><span>ghostty · kitty · iterm · alacritty</span><b>kept</b></div>
-          <div class="ev-note">herdr runs in the one you already chose</div>
+          <div class="ev-note">innov runs in the one you already chose</div>
         </div>
       </div>
       <div class="cap cap-flat">
@@ -183,14 +183,14 @@ import SiteLayout from '../components/SiteLayout.astro';
           <h3>Manager apps are clients without a runtime.</h3>
           <p>
             Conductor, Emdash and Superset manage a herd from a window:
-            worktrees, diffs, review queues. Useful, and Herdr pairs fine with
+            worktrees, diffs, review queues. Useful, and Innov pairs fine with
             that flow. But a window that manages agents is not a place agents
             live: quit the app and the herd goes with it.
           </p>
         </div>
         <div class="ev" aria-hidden="true">
           <div class="ev-row"><span>their app quits</span><b>agents stop</b></div>
-          <div class="ev-row"><span>every herdr client quits</span><b>agents keep going</b></div>
+          <div class="ev-row"><span>every innov client quits</span><b>agents keep going</b></div>
         </div>
       </div>
       <div class="cap cap-flat">
@@ -198,7 +198,7 @@ import SiteLayout from '../components/SiteLayout.astro';
         <div class="cap-in">
           <h3>Dashboards watch processes.</h3>
           <p>
-            Solo supervises a dev stack: health, restarts, logs. Herdr's job
+            Solo supervises a dev stack: health, restarts, logs. Innov's job
             is different: interactive agent terminals that stay open, hold
             scrollback and state, and stay yours whether or not anything is
             watching them.
@@ -217,32 +217,32 @@ import SiteLayout from '../components/SiteLayout.astro';
       </div>
       <div class="vs-list">
         <article>
-          <b>herdr vs tmux</b>
-          <p>tmux keeps terminals alive; so does Herdr. The difference is Herdr knows which terminals are agents, what state each one is in, and how to wait on them. tmux sees panes.</p>
+          <b>innov vs tmux</b>
+          <p>tmux keeps terminals alive; so does Innov. The difference is Innov knows which terminals are agents, what state each one is in, and how to wait on them. tmux sees panes.</p>
         </article>
         <article>
-          <b>herdr vs zellij</b>
-          <p>Zellij is a friendlier workspace for humans in terminals. Herdr is a runtime for agents in terminals: state, waits, direct attach, and an API.</p>
+          <b>innov vs zellij</b>
+          <p>Zellij is a friendlier workspace for humans in terminals. Innov is a runtime for agents in terminals: state, waits, direct attach, and an API.</p>
         </article>
         <article>
-          <b>herdr vs cmux</b>
-          <p>cmux is a Mac terminal app built around agents. Herdr isn't an app: it's the runtime underneath, in whatever terminal you already use, reachable over SSH.</p>
+          <b>innov vs cmux</b>
+          <p>cmux is a Mac terminal app built around agents. Innov isn't an app: it's the runtime underneath, in whatever terminal you already use, reachable over SSH.</p>
         </article>
         <article>
-          <b>herdr vs warp</b>
-          <p>Warp wants to be your terminal and your platform. Herdr keeps your terminal and owns what runs inside it.</p>
+          <b>innov vs warp</b>
+          <p>Warp wants to be your terminal and your platform. Innov keeps your terminal and owns what runs inside it.</p>
         </article>
         <article>
-          <b>herdr vs opencode web</b>
-          <p>opencode's web mode serves one agent over HTTP. Herdr runs the whole herd: any agent CLI, many at once, from any tty.</p>
+          <b>innov vs opencode web</b>
+          <p>opencode's web mode serves one agent over HTTP. Innov runs the whole herd: any agent CLI, many at once, from any tty.</p>
         </article>
         <article>
-          <b>herdr vs solo</b>
-          <p>Solo is a dashboard that supervises your dev processes. Herdr holds interactive agent terminals open whether or not anything is watching them.</p>
+          <b>innov vs solo</b>
+          <p>Solo is a dashboard that supervises your dev processes. Innov holds interactive agent terminals open whether or not anything is watching them.</p>
         </article>
         <article>
-          <b>herdr vs conductor, emdash, superset</b>
-          <p>Manager apps put worktrees, diffs and review queues in a window. Herdr is the layer under that kind of window: quit their app and the agents stop; detach every Herdr client and they don't.</p>
+          <b>innov vs conductor, emdash, superset</b>
+          <p>Manager apps put worktrees, diffs and review queues in a window. Innov is the layer under that kind of window: quit their app and the agents stop; detach every Innov client and they don't.</p>
         </article>
       </div>
     </section>
@@ -256,7 +256,7 @@ import SiteLayout from '../components/SiteLayout.astro';
           agent CLIs. They just stop dying when a window does.
         </p>
         <div class="ph-actions">
-          <a class="btn-solid" href="/docs/install/">Install Herdr</a>
+          <a class="btn-solid" href="/docs/install/">Install Innov</a>
           <a class="btn-ghost" href="/docs/quick-start/">Quick start</a>
         </div>
       </div>

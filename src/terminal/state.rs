@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 // Effective state arbitration is intentionally centralized here. Full lifecycle
-// Herdr hook integrations are hook-authoritative while live; screen recovery
+// Innov hook integrations are hook-authoritative while live; screen recovery
 // remains only for session-only/custom hook paths and fallback detection.
 // Process-exit updates clear matching hook authority before recomputing state.
 

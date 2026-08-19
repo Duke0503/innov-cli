@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       commit:
-        description: Optional master commit SHA to publish
+        description: Optional main commit SHA to publish
         required: false
         type: string
 
@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
-          ref: master
+          ref: main
           fetch-depth: 0
           persist-credentials: false
 
@@ -45,16 +45,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin master --tags
+          git fetch origin main --tags
           requested="${{ github.event.inputs.commit || '' }}"
           if [ -n "$requested" ]; then
             commit="$(git rev-parse "$requested^{commit}")"
-            if ! git merge-base --is-ancestor "$commit" origin/master; then
-              echo "error: requested commit $commit is not reachable from origin/master" >&2
+            if ! git merge-base --is-ancestor "$commit" origin/main; then
+              echo "error: requested commit $commit is not reachable from origin/main" >&2
               exit 1
             fi
           else
-            commit="$(python3 scripts/preview.py select-commit --ref origin/master)"
+            commit="$(python3 scripts/preview.py select-commit --ref origin/main)"
           fi
           current_preview="$(python3 scripts/preview.py current-commit --manifest website/preview.json || true)"
           if [ "$current_preview" = "$commit" ] && node website/scripts/docs-preview.mjs check; then
@@ -127,26 +127,26 @@ jobs:
         include:
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            name: herdr-linux-x86_64
+            name: innov-linux-x86_64
           - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
-            name: herdr-linux-aarch64
+            name: innov-linux-aarch64
           - target: x86_64-apple-darwin
             os: macos-latest
-            name: herdr-macos-x86_64
+            name: innov-macos-x86_64
           - target: aarch64-apple-darwin
             os: macos-latest
-            name: herdr-macos-aarch64
+            name: innov-macos-aarch64
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-            name: herdr-windows-x86_64.zip
+            name: innov-windows-x86_64.zip
     runs-on: ${{ matrix.os }}
     env:
       LIBGHOSTTY_VT_OPTIMIZE: ReleaseFast
       LIBGHOSTTY_VT_SIMD: 'true'
-      HERDR_BUILD_CHANNEL: preview
-      HERDR_BUILD_ID: ${{ needs.preflight.outputs.build_id }}
-      HERDR_BUILD_COMMIT: ${{ needs.preflight.outputs.commit }}
+      INNOV_BUILD_CHANNEL: preview
+      INNOV_BUILD_ID: ${{ needs.preflight.outputs.build_id }}
+      INNOV_BUILD_COMMIT: ${{ needs.preflight.outputs.commit }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
@@ -229,7 +229,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cp target/${{ matrix.target }}/release/herdr ${{ matrix.name }}
+          cp target/${{ matrix.target }}/release/innov ${{ matrix.name }}
           if [ "${{ runner.os }}" = "Linux" ]; then
             file ${{ matrix.name }} > BUILD_INFO.txt
             ldd ${{ matrix.name }} > LDD_INFO.txt 2>&1 || true
@@ -260,9 +260,9 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $package = Join-Path $env:RUNNER_TEMP "Microsoft.Windows.Console.ConPTY.nupkg"
-          $stage = Join-Path $env:RUNNER_TEMP "herdr-windows-x86_64"
+          $stage = Join-Path $env:RUNNER_TEMP "innov-windows-x86_64"
           .\scripts\package_windows_conpty.ps1 `
-            -HerdrExe target\${{ matrix.target }}\release\herdr.exe `
+            -InnovExe target\${{ matrix.target }}\release\innov.exe `
             -PackagePath $package `
             -StageDir $stage `
             -OutputPath ${{ matrix.name }}
@@ -287,7 +287,7 @@ jobs:
     if: needs.preflight.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
     concurrency:
-      group: docs-publish-master
+      group: docs-publish-main
       cancel-in-progress: false
     permissions:
       contents: write
@@ -295,7 +295,7 @@ jobs:
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
-          ref: master
+          ref: main
           fetch-depth: 0
           persist-credentials: false
 
@@ -337,9 +337,9 @@ jobs:
           python3 - <<'PY'
           import json, pathlib
           result = {}
-          for path in pathlib.Path('artifacts').glob('herdr-*/*.sha256'):
+          for path in pathlib.Path('artifacts').glob('innov-*/*.sha256'):
               digest, name = path.read_text().split()[:2]
-              target = name.removeprefix('herdr-').removesuffix('.exe').removesuffix('.zip')
+              target = name.removeprefix('innov-').removesuffix('.exe').removesuffix('.zip')
               result[target] = digest
           pathlib.Path('preview-sha256.json').write_text(json.dumps(result, indent=2) + '\n')
           PY
@@ -355,11 +355,11 @@ jobs:
           overwrite_files: true
           target_commitish: ${{ needs.preflight.outputs.commit }}
           files: |
-            artifacts/herdr-linux-x86_64/herdr-linux-x86_64
-            artifacts/herdr-linux-aarch64/herdr-linux-aarch64
-            artifacts/herdr-macos-x86_64/herdr-macos-x86_64
-            artifacts/herdr-macos-aarch64/herdr-macos-aarch64
-            artifacts/herdr-windows-x86_64.zip/herdr-windows-x86_64.zip
+            artifacts/innov-linux-x86_64/innov-linux-x86_64
+            artifacts/innov-linux-aarch64/innov-linux-aarch64
+            artifacts/innov-macos-x86_64/innov-macos-x86_64
+            artifacts/innov-macos-aarch64/innov-macos-aarch64
+            artifacts/innov-windows-x86_64.zip/innov-windows-x86_64.zip
 
       - name: Update preview documentation and manifest
         run: |
@@ -387,15 +387,15 @@ jobs:
           git diff --cached --quiet || git commit -m "docs: publish preview documentation"
           remote="https://x-access-token:${KANGAL_GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           for attempt in 1 2 3; do
-            git pull --rebase "$remote" master
+            git pull --rebase "$remote" main
             node website/scripts/docs-preview.mjs check
             node website/scripts/docs-versions.mjs check
             (cd website && bun run build)
-            if git push "$remote" HEAD:master; then
+            if git push "$remote" HEAD:main; then
               exit 0
             fi
             if [ "$attempt" -lt 3 ]; then
-              echo "master changed during preview publishing; retrying ($attempt/3)"
+              echo "main changed during preview publishing; retrying ($attempt/3)"
               sleep $((attempt * 2))
             fi
           done
@@ -454,7 +454,7 @@ jobs:
 
           PREVIEW_URL="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${PREVIEW_TAG}"
           PREVIEW_COMMENT_MARKER="<!-- herdr:preview-released:${PREVIEW_TAG} -->"
-          PREVIEW_COMMENT="${PREVIEW_COMMENT_MARKER}"$'\n'"Released on the preview channel in [${PREVIEW_BUILD_ID}](${PREVIEW_URL}). This is available to preview users, but is not in a stable Herdr release yet."
+          PREVIEW_COMMENT="${PREVIEW_COMMENT_MARKER}"$'\n'"Released on the preview channel in [${PREVIEW_BUILD_ID}](${PREVIEW_URL}). This is available to preview users, but is not in a stable Innov release yet."
 
           issue_has_comment_marker() {
             local issue="$1"
